@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { MediaUpload, type MediaFile } from "./components/MediaUpload";
+import { CreateInvoice } from "./pages/CreateInvoice";
 
 export default function App() {
+  const [view, setView] = useState<"invoice" | "components">("invoice");
   const [logoFiles, setLogoFiles] = useState<MediaFile[]>([]);
   const [itemFiles, setItemFiles] = useState<MediaFile[]>([]);
 
@@ -23,6 +25,15 @@ export default function App() {
     setter((prev) => prev.filter((f) => f.id !== id));
   }
 
+  if (view === "invoice") {
+    return (
+      <>
+        <DevSwitcher current={view} onSwitch={setView} />
+        <CreateInvoice />
+      </>
+    );
+  }
+
   return (
     <div
       style={{
@@ -33,6 +44,7 @@ export default function App() {
           '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
+      <DevSwitcher current={view} onSwitch={setView} />
       <h1 style={{ fontSize: 22, fontWeight: 700, color: "#111827", marginBottom: 4 }}>
         MediaUpload — component preview
       </h1>
@@ -126,6 +138,21 @@ function Card({ title, subtitle, children }: { title: string; subtitle: string; 
       <h2 style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 600, color: "#111827" }}>{title}</h2>
       <p style={{ margin: "0 0 16px", fontSize: 12, color: "#9CA3AF" }}>{subtitle}</p>
       {children}
+    </div>
+  );
+}
+
+function DevSwitcher({ current, onSwitch }: { current: "invoice" | "components"; onSwitch: (v: "invoice" | "components") => void }) {
+  return (
+    <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 9999, display: "flex", gap: 4, background: "#1E3A8A", borderRadius: 8, padding: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+      {(["invoice", "components"] as const).map((v) => (
+        <button key={v} type="button" onClick={() => onSwitch(v)}
+          style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
+            background: current === v ? "#fff" : "transparent",
+            color: current === v ? "#1E3A8A" : "rgba(255,255,255,0.7)" }}>
+          {v === "invoice" ? "Create Invoice" : "MediaUpload preview"}
+        </button>
+      ))}
     </div>
   );
 }
