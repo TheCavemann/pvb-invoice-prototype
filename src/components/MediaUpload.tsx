@@ -114,7 +114,7 @@ export function MediaUpload({
         onUpload?.(
           valid.map((f) => ({
             ...f,
-            status: Math.random() < 0.25 ? ("error" as const) : ("uploaded" as const),
+            status: Math.random() < 0.05 ? ("error" as const) : ("uploaded" as const),
           }))
         );
       }, 800);
