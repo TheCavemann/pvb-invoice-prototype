@@ -1,12 +1,8 @@
 import { useState } from "react";
-import { ItemsTable, type LineItem } from "../components/ItemsTable";
+import { ItemsTable, emptyItem, type LineItem } from "../components/ItemsTable";
 
 const BLUE = "#1D4ED8";
 const BLUE_LIGHT = "#EFF6FF";
-
-function makeId() {
-  return `item_${Math.random().toString(36).slice(2, 9)}`;
-}
 
 const WALLETS = [
   { name: "Interest Accruals", bal: "₦0.00" },
@@ -16,16 +12,12 @@ const WALLETS = [
 ];
 
 export function CreateInvoice() {
-  const [items, setItems] = useState<LineItem[]>([
-    { id: makeId(), description: "", quantity: 1, unitPrice: 0 },
-  ]);
-  const [lastClicked, setLastClicked] = useState<string | null>(null);
+  const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [dueDate, setDueDate] = useState<"yes" | "no">("no");
   const [wallet, setWallet] = useState<string | null>(null);
   const [walletOpen, setWalletOpen] = useState(false);
 
   const subtotal = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
-  const clickedItem = items.find((it) => it.id === lastClicked);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#fff", fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: 14, color: "#111827" }}>
@@ -152,7 +144,6 @@ export function CreateInvoice() {
             <ItemsTable
               items={items}
               onChange={setItems}
-              onAddImageClick={(id) => setLastClicked(id)}
             />
             <div style={{ padding: "0 0 4px" }} />
           </SectionBlock>
@@ -262,12 +253,6 @@ export function CreateInvoice() {
         </div>
       </div>
 
-      {/* Dev toast */}
-      {lastClicked && (
-        <div role="status" style={{ position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)", background: "#111827", color: "#fff", fontSize: 13, padding: "10px 18px", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.2)", whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9999 }}>
-          "Add image" clicked: <strong>{clickedItem?.description || "(empty item)"}</strong> — uploader coming next
-        </div>
-      )}
     </div>
   );
 }
