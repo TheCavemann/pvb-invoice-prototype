@@ -34,6 +34,11 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
   const openItem = items.find((it) => it.id === openItemId) ?? null;
   const totalImages = items.reduce((s, it) => s + it.images.length, 0);
   const invoiceSlotsRemaining = MAX_IMAGES_INVOICE - totalImages;
+  const canDelete = items.length > 1;
+
+  function removeItem(id: string) {
+    onChange(items.filter((it) => it.id !== id));
+  }
 
   function updateItem(id: string, patch: Partial<LineItem>) {
     onChange(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
@@ -75,6 +80,7 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
               <th style={th("right")}>Unit Price (NGN)</th>
               <th style={th("right")}>Amount (NGN)</th>
               <th style={{ width: 56, padding: 0, border: "none" }} />
+              <th style={{ width: 32, padding: 0, border: "none" }} />
             </tr>
           </thead>
 
@@ -252,6 +258,37 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                         }}
                       >
                         <AddImageIcon />
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Delete cell */}
+                  <td style={{ width: 32, padding: "0 8px 0 0", verticalAlign: "middle" }}>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        aria-label={`Remove ${item.description || "this item"}`}
+                        title="Remove item"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 26,
+                          height: 26,
+                          borderRadius: 6,
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          color: isHovered ? "#EF4444" : "transparent",
+                          transition: "color 0.12s",
+                          padding: 0,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
                       </button>
                     )}
                   </td>
