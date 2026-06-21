@@ -56,6 +56,7 @@ export default function App() {
         <InvoicesList
           invoices={sentInvoices}
           onView={(inv) => { setViewingInvoice(inv); setView("recipient"); }}
+          onCreateNew={() => setView("invoice")}
         />
       </>
     );
@@ -72,7 +73,7 @@ export default function App() {
           onDeleteDraft={deleteDraft}
           onOpenDraft={(d) => setOpenDraft(d)}
           onClearOpenDraft={() => setOpenDraft(null)}
-          onSendInvoice={(inv) => { addSentInvoice(inv); setView("list"); }}
+          onSendInvoice={(inv) => { addSentInvoice(inv); setViewingInvoice(inv); setView("list"); }}
         />
       </>
     );
