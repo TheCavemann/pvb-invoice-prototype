@@ -280,7 +280,7 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           border: "none",
                           background: "transparent",
                           cursor: "pointer",
-                          color: isHovered ? "#EF4444" : "transparent",
+                          color: isHovered ? "#EF4444" : "#D1D5DB",
                           transition: "color 0.12s",
                           padding: 0,
                           flexShrink: 0,
