@@ -90,6 +90,8 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
               const isHovered = hoveredRow === item.id;
               const hasImages = item.images.length > 0;
               const firstUploaded = item.images.find((f) => f.status === "uploaded");
+              const anyUploading = item.images.some((f) => f.status === "uploading");
+              const allFailed = hasImages && !firstUploaded && !anyUploading;
               const count = item.images.length;
               const itemFull = count >= MAX_IMAGES_PER_ITEM;
               const invoiceFull = invoiceSlotsRemaining <= 0;
@@ -191,8 +193,13 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                               alt={firstUploaded.caption || `Reference image for ${item.description || "this item"}`}
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />
+                          ) : allFailed ? (
+                            /* All uploads failed — show error indicator */
+                            <svg width="14" height="14" viewBox="0 0 20 20" fill="#EF4444" aria-label="Upload failed">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
                           ) : (
-                            /* Still uploading — spinner */
+                            /* Uploading in progress */
                             <MiniSpinner />
                           )}
                         </div>
