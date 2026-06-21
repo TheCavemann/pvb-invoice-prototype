@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ItemsTable, emptyItem, type LineItem } from "../components/ItemsTable";
 import { PreviewInvoice, type InvoiceData } from "../components/PreviewInvoice";
+import type { Draft } from "../types/draft";
+import { makeDraftId } from "../types/draft";
+import type { MediaFile } from "../components/MediaUpload";
 
 const BLUE = "#1D4ED8";
 const BLUE_LIGHT = "#EFF6FF";
@@ -12,14 +15,63 @@ const WALLETS = [
   { name: "Transportation", bal: "₦11,561.44" },
 ];
 
-export function CreateInvoice() {
-  const [items, setItems] = useState<LineItem[]>([emptyItem()]);
-  const [dueDate, setDueDate] = useState<"yes" | "no">("no");
-  const [wallet, setWallet] = useState<string | null>(null);
+interface CreateInvoiceProps {
+  drafts?: Draft[];
+  initialDraft?: Draft | null;
+  onSaveDraft?: (draft: Draft) => void;
+  onDeleteDraft?: (id: string) => void;
+  onOpenDraft?: (draft: Draft) => void;
+  onClearOpenDraft?: () => void;
+}
+
+export function CreateInvoice({
+  drafts = [],
+  initialDraft = null,
+  onSaveDraft,
+  onDeleteDraft,
+  onOpenDraft,
+  onClearOpenDraft,
+}: CreateInvoiceProps) {
+  // Track which draft this form corresponds to (so re-saving updates it)
+  const draftIdRef = useRef<string>(initialDraft?.id ?? makeDraftId());
+
+  const [items, setItems] = useState<LineItem[]>(initialDraft?.items ?? [emptyItem()]);
+  const [dueDate, setDueDate] = useState<"yes" | "no">(initialDraft?.dueDate ?? "no");
+  const [wallet, setWallet] = useState<string | null>(initialDraft?.wallet ?? null);
   const [walletOpen, setWalletOpen] = useState(false);
-  const [invoiceName, setInvoiceName] = useState("");
-  const [invoiceDesc, setInvoiceDesc] = useState("");
+  const [invoiceName, setInvoiceName] = useState(initialDraft?.invoiceName ?? "");
+  const [invoiceDesc, setInvoiceDesc] = useState(initialDraft?.description ?? "");
   const [showPreview, setShowPreview] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
+
+  // When the parent loads a draft (user clicked "Open" in drafts panel),
+  // reset the whole form to that draft's state.
+  useEffect(() => {
+    if (!initialDraft) return;
+    draftIdRef.current = initialDraft.id;
+    setItems(initialDraft.items);
+    setDueDate(initialDraft.dueDate);
+    setWallet(initialDraft.wallet);
+    setInvoiceName(initialDraft.invoiceName);
+    setInvoiceDesc(initialDraft.description);
+    onClearOpenDraft?.();
+  }, [initialDraft?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleSaveDraft() {
+    const draft: Draft = {
+      id: draftIdRef.current,
+      savedAt: Date.now(),
+      invoiceName,
+      description: invoiceDesc,
+      wallet,
+      dueDate,
+      items,
+    };
+    onSaveDraft?.(draft);
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2500);
+  }
 
   const subtotal = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
 
@@ -97,7 +149,22 @@ export function CreateInvoice() {
             </button>
             <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#111827" }}>Create Invoice</h1>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Drafts button */}
+            <button
+              type="button"
+              onClick={() => setShowDrafts(true)}
+              style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, background: "none", border: "1px solid #E5E7EB", borderRadius: 7, padding: "6px 14px", cursor: "pointer", color: "#374151", fontSize: 13, fontFamily: "inherit" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" /></svg>
+              Drafts
+              {drafts.length > 0 && (
+                <span style={{ background: BLUE, color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 2 }}>
+                  {drafts.length}
+                </span>
+              )}
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#374151", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700 }}>AC</div>
               <div>
@@ -108,6 +175,7 @@ export function CreateInvoice() {
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="#9CA3AF"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="#9CA3AF"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+            </div>
           </div>
         </header>
 
@@ -257,7 +325,7 @@ export function CreateInvoice() {
 
           {/* Footer */}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-            <button type="button" style={{ padding: "11px 28px", background: "#fff", color: "#374151", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+            <button type="button" onClick={handleSaveDraft} style={{ padding: "11px 28px", background: "#fff", color: "#374151", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
               Save to drafts
             </button>
             <button type="button" onClick={() => setShowPreview(true)} style={{ padding: "11px 28px", background: BLUE, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", minWidth: 100 }}>
@@ -269,6 +337,35 @@ export function CreateInvoice() {
 
       {showPreview && (
         <PreviewInvoice data={previewData} onClose={() => setShowPreview(false)} />
+      )}
+
+      {/* Drafts slide-over panel */}
+      {showDrafts && (
+        <DraftsPanel
+          drafts={drafts}
+          onOpen={(d) => {
+            onOpenDraft?.(d);
+            setShowDrafts(false);
+          }}
+          onDelete={onDeleteDraft}
+          onClose={() => setShowDrafts(false)}
+        />
+      )}
+
+      {/* "Saved" toast */}
+      {savedToast && (
+        <div role="status" style={{
+          position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          background: "#111827", color: "#fff", fontSize: 13, padding: "10px 18px",
+          borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9000,
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="#4ADE80">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Draft saved — images included
+        </div>
       )}
     </div>
   );
@@ -351,3 +448,122 @@ const plainInput: React.CSSProperties = {
   background: "transparent",
   boxSizing: "border-box",
 };
+
+/* ── Drafts slide-over panel ── */
+
+interface DraftsPanelProps {
+  drafts: Draft[];
+  onOpen: (draft: Draft) => void;
+  onDelete?: (id: string) => void;
+  onClose: () => void;
+}
+
+function DraftsPanel({ drafts, onOpen, onDelete, onClose }: DraftsPanelProps) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 3000 }}
+      />
+      {/* Panel */}
+      <div style={{
+        position: "fixed", top: 0, right: 0, bottom: 0, width: 400,
+        background: "#fff", boxShadow: "-8px 0 32px rgba(0,0,0,0.12)",
+        zIndex: 3001, display: "flex", flexDirection: "column",
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #E5E7EB", flexShrink: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>
+            Drafts {drafts.length > 0 && <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3AF" }}>({drafts.length})</span>}
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 4, borderRadius: 6, display: "flex" }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        {/* List */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
+          {drafts.length === 0 ? (
+            <div style={{ padding: "48px 24px", textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>
+              No drafts yet. Hit "Save to drafts" on an invoice to save your progress.
+            </div>
+          ) : (
+            drafts.map((draft) => <DraftCard key={draft.id} draft={draft} onOpen={onOpen} onDelete={onDelete} />)
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DraftCard({ draft, onOpen, onDelete }: { draft: Draft; onOpen: (d: Draft) => void; onDelete?: (id: string) => void }) {
+  const totalImages = draft.items.reduce((s, it) => s + it.images.filter((f) => f.status === "uploaded").length, 0);
+  // Collect up to 4 preview thumbnails across all items
+  const thumbs: MediaFile[] = [];
+  for (const item of draft.items) {
+    for (const img of item.images) {
+      if (img.status === "uploaded" && thumbs.length < 4) thumbs.push(img);
+    }
+  }
+  const saved = new Date(draft.savedAt);
+  const timeStr = saved.toLocaleString("en-NG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div style={{ padding: "14px 20px", borderBottom: "1px solid #F3F4F6" }}>
+      {/* Title row */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {draft.invoiceName || <span style={{ color: "#9CA3AF", fontWeight: 400 }}>Untitled invoice</span>}
+          </div>
+          <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+            {draft.items.length} item{draft.items.length !== 1 ? "s" : ""}
+            {totalImages > 0 && ` · ${totalImages} image${totalImages !== 1 ? "s" : ""}`}
+            {" · "}{timeStr}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onDelete?.(draft.id)}
+          aria-label="Delete draft"
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#D1D5DB", padding: 2, flexShrink: 0, display: "flex" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#D1D5DB")}
+        >
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Image thumbnails — proof the images are there */}
+      {thumbs.length > 0 && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+          {thumbs.map((f) => (
+            <img key={f.id} src={f.url} alt={f.caption || f.name}
+              style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 6, border: "1px solid #E5E7EB", flexShrink: 0 }} />
+          ))}
+          {totalImages > 4 && (
+            <div style={{ width: 44, height: 44, borderRadius: 6, background: "#F3F4F6", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#6B7280", fontWeight: 600 }}>
+              +{totalImages - 4}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Open button */}
+      <button
+        type="button"
+        onClick={() => onOpen(draft)}
+        style={{ width: "100%", padding: "8px 0", background: BLUE_LIGHT, color: BLUE, border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+      >
+        Open draft
+      </button>
+    </div>
+  );
+}

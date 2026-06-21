@@ -2,11 +2,14 @@ import { useState } from "react";
 import { MediaUpload, type MediaFile } from "./components/MediaUpload";
 import { CreateInvoice } from "./pages/CreateInvoice";
 import { InvoiceView } from "./pages/InvoiceView";
+import type { Draft } from "./types/draft";
 
 export default function App() {
   const [view, setView] = useState<"invoice" | "components" | "recipient">("invoice");
   const [logoFiles, setLogoFiles] = useState<MediaFile[]>([]);
   const [itemFiles, setItemFiles] = useState<MediaFile[]>([]);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [openDraft, setOpenDraft] = useState<Draft | null>(null);
 
   function handleUpload(
     incoming: MediaFile[],
@@ -26,11 +29,30 @@ export default function App() {
     setter((prev) => prev.filter((f) => f.id !== id));
   }
 
+  function saveDraft(draft: Draft) {
+    setDrafts((prev) => {
+      // Replace existing draft with same id, otherwise prepend
+      const without = prev.filter((d) => d.id !== draft.id);
+      return [draft, ...without];
+    });
+  }
+
+  function deleteDraft(id: string) {
+    setDrafts((prev) => prev.filter((d) => d.id !== id));
+  }
+
   if (view === "invoice") {
     return (
       <>
         <DevSwitcher current={view} onSwitch={setView} />
-        <CreateInvoice />
+        <CreateInvoice
+          drafts={drafts}
+          initialDraft={openDraft}
+          onSaveDraft={saveDraft}
+          onDeleteDraft={deleteDraft}
+          onOpenDraft={(d) => setOpenDraft(d)}
+          onClearOpenDraft={() => setOpenDraft(null)}
+        />
       </>
     );
   }
