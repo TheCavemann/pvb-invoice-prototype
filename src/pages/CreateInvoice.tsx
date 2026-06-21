@@ -239,32 +239,7 @@ export function CreateInvoice({
                 {/* Wallet picker */}
                 <div>
                   <FieldLabel>Wallet to receive payment</FieldLabel>
-                  <div style={{ position: "relative" }}>
-                    <button
-                      type="button"
-                      onClick={() => setWalletOpen((o) => !o)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8, background: "#fff", cursor: "pointer", fontSize: 14, fontFamily: "inherit", color: wallet ? "#111827" : "#9CA3AF" }}
-                    >
-                      {wallet ?? "Select Wallet"}
-                      <svg width="16" height="16" viewBox="0 0 20 20" fill="#9CA3AF"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                    </button>
-                    {walletOpen && (
-                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 200, overflow: "hidden" }}>
-                        {WALLETS.map(({ name, bal }) => (
-                          <button key={name} type="button" onClick={() => { setWallet(name); setWalletOpen(false); }}
-                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: wallet === name ? BLUE_LIGHT : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-                            <div style={{ width: 34, height: 34, borderRadius: 6, background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              <svg width="16" height="16" viewBox="0 0 20 20" fill="#F87171"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>{name}</div>
-                              <div style={{ fontSize: 12, color: "#9CA3AF" }}>{bal}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <WalletPicker wallet={wallet} onSelect={(name) => { setWallet(name); setWalletOpen(false); }} open={walletOpen} onToggle={() => setWalletOpen((o) => !o)} onClose={() => setWalletOpen(false)} />
                 </div>
 
                 {/* Due date toggle */}
@@ -365,6 +340,106 @@ export function CreateInvoice({
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           Draft saved — images included
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Wallet picker ── */
+
+interface WalletPickerProps {
+  wallet: string | null;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onSelect: (name: string) => void;
+}
+
+function WalletPicker({ wallet, open, onToggle, onClose, onSelect }: WalletPickerProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (
+        triggerRef.current?.contains(e.target as Node) ||
+        menuRef.current?.contains(e.target as Node)
+      ) return;
+      onClose();
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, onClose]);
+
+  // Position the fixed popover below the trigger button
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setMenuStyle({
+      position: "fixed",
+      top: r.bottom + 4,
+      left: r.left,
+      width: r.width,
+      zIndex: 9000,
+    });
+  }, [open]);
+
+  return (
+    <div>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8,
+          background: "#fff", cursor: "pointer", fontSize: 14, fontFamily: "inherit",
+          color: wallet ? "#111827" : "#9CA3AF",
+        }}
+      >
+        {wallet ?? "Select Wallet"}
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="#9CA3AF" style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}>
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          style={{
+            ...menuStyle,
+            background: "#fff",
+            border: "1px solid #E5E7EB",
+            borderRadius: 8,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            overflow: "hidden",
+          }}
+        >
+          {WALLETS.map(({ name, bal }) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => onSelect(name)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 14px",
+                background: wallet === name ? BLUE_LIGHT : "transparent",
+                border: "none", borderBottom: "1px solid #F3F4F6",
+                cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="#9CA3AF" style={{ flexShrink: 0 }}>
+                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+              </svg>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: wallet === name ? 600 : 400, color: "#111827" }}>{name}</span>
+              <span style={{ fontSize: 12, color: "#9CA3AF", textDecoration: "line-through" }}>{bal}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
