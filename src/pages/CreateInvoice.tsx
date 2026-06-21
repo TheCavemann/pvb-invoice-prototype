@@ -15,6 +15,19 @@ const WALLETS = [
   { name: "Transportation", bal: "₦11,561.44" },
 ];
 
+interface Recipient {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+const INITIAL_RECIPIENTS: Recipient[] = [
+  { id: "r1", name: "Ifeanyi Nwune", email: "ifeanyinwune@gmail.com", phone: "+2347065705327", address: "21 Muyiwa Opaleye Street, Lekki Lagos" },
+  { id: "r2", name: "Arinze Porchplus", email: "arinze@porchplus.com", phone: "+2348012345678", address: "5 Admiralty Way, Lekki Phase 1" },
+];
+
 interface CreateInvoiceProps {
   drafts?: Draft[];
   initialDraft?: Draft | null;
@@ -44,6 +57,10 @@ export function CreateInvoice({
   const [showPreview, setShowPreview] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
+  const [recipients, setRecipients] = useState<Recipient[]>(INITIAL_RECIPIENTS);
+  const [recipient, setRecipient] = useState<Recipient | null>(null);
+  const [recipientOpen, setRecipientOpen] = useState(false);
+  const [showAddRecipient, setShowAddRecipient] = useState(false);
 
   // When the parent loads a draft (user clicked "Open" in drafts panel),
   // reset the whole form to that draft's state.
@@ -212,10 +229,15 @@ export function CreateInvoice({
 
               <div style={{ marginTop: 20 }}>
                 <FieldLabel>Recipient</FieldLabel>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8, cursor: "pointer" }}>
-                  <span style={{ color: "#9CA3AF" }}>Select Recipient</span>
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="#9CA3AF"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                </div>
+                <RecipientPicker
+                  recipients={recipients}
+                  selected={recipient}
+                  open={recipientOpen}
+                  onToggle={() => setRecipientOpen((o) => !o)}
+                  onClose={() => setRecipientOpen(false)}
+                  onSelect={(r) => { setRecipient(r); setRecipientOpen(false); }}
+                  onAddNew={() => { setRecipientOpen(false); setShowAddRecipient(true); }}
+                />
               </div>
             </div>
           </SectionBlock>
@@ -324,6 +346,18 @@ export function CreateInvoice({
           }}
           onDelete={onDeleteDraft}
           onClose={() => setShowDrafts(false)}
+        />
+      )}
+
+      {/* Add Recipient slide-over */}
+      {showAddRecipient && (
+        <AddRecipientPanel
+          onClose={() => setShowAddRecipient(false)}
+          onAdd={(r) => {
+            setRecipients((prev) => [...prev, r]);
+            setRecipient(r);
+            setShowAddRecipient(false);
+          }}
         />
       )}
 
@@ -453,6 +487,305 @@ function WalletPicker({ wallet, open, onToggle, onClose, onSelect }: WalletPicke
     </div>
   );
 }
+
+/* ── Recipient picker ── */
+
+interface RecipientPickerProps {
+  recipients: Recipient[];
+  selected: Recipient | null;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onSelect: (r: Recipient) => void;
+  onAddNew: () => void;
+}
+
+function RecipientPicker({ recipients, selected, open, onToggle, onClose, onSelect, onAddNew }: RecipientPickerProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (
+        triggerRef.current?.contains(e.target as Node) ||
+        menuRef.current?.contains(e.target as Node)
+      ) return;
+      onClose();
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setMenuStyle({ position: "fixed", top: r.bottom + 4, left: r.left, width: r.width, zIndex: 9000 });
+  }, [open]);
+
+  return (
+    <div>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8,
+          background: "#fff", cursor: "pointer", fontSize: 14, fontFamily: "inherit",
+          color: selected ? "#111827" : "#9CA3AF",
+        }}
+      >
+        {selected?.name ?? "Select Recipient"}
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="#9CA3AF"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s", flexShrink: 0 }}>
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          style={{
+            ...menuStyle,
+            background: "#fff",
+            border: "1px solid #E5E7EB",
+            borderRadius: 8,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            overflow: "hidden",
+          }}
+        >
+          {recipients.map((r, i) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => onSelect(r)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center",
+                padding: "14px 16px",
+                background: selected?.id === r.id ? BLUE_LIGHT : "transparent",
+                border: "none",
+                borderBottom: i < recipients.length - 1 ? "1px solid #F3F4F6" : "none",
+                cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                fontSize: 14, color: "#111827",
+              }}
+            >
+              {r.name}
+            </button>
+          ))}
+
+          {/* Divider */}
+          <div style={{ borderTop: "1px solid #F3F4F6" }} />
+
+          {/* Add Recipient link */}
+          <button
+            type="button"
+            onClick={onAddNew}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8,
+              padding: "14px 16px",
+              background: "transparent", border: "none",
+              cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+              fontSize: 14, fontWeight: 500, color: BLUE,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Add Recipient
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Add Recipient slide-over ── */
+
+interface AddRecipientPanelProps {
+  onClose: () => void;
+  onAdd: (r: Recipient) => void;
+}
+
+function AddRecipientPanel({ onClose, onAdd }: AddRecipientPanelProps) {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [saveRecipient, setSaveRecipient] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  function handleSubmit() {
+    if (!fullName.trim()) return;
+    const newRecipient: Recipient = {
+      id: `r_${Math.random().toString(36).slice(2, 9)}`,
+      name: fullName.trim(),
+      email: email.trim(),
+      phone: phone ? `+234${phone.replace(/^0/, "")}` : "",
+      address: address.trim(),
+    };
+    onAdd(newRecipient);
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 4000 }}
+      />
+      {/* Panel */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add Recipient"
+        style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 420,
+          background: "#fff", boxShadow: "-8px 0 32px rgba(0,0,0,0.16)",
+          zIndex: 4001, display: "flex", flexDirection: "column",
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #F3F4F6", flexShrink: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#111827" }}>Add Recipient</div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: "#F3F4F6", border: "none", cursor: "pointer", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#374151" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px" }}>
+          <div style={{ marginBottom: 24 }}>
+            <PanelLabel>Full name</PanelLabel>
+            <input
+              type="text"
+              placeholder="Enter full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              style={panelInput}
+              autoFocus
+            />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <PanelLabel>Email Address</PanelLabel>
+            <input
+              type="email"
+              placeholder="Enter email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={panelInput}
+            />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <PanelLabel>Phone Number</PanelLabel>
+            <div style={{ display: "flex", border: "1px solid #E5E7EB", borderRadius: 8, overflow: "hidden" }}>
+              {/* Country code prefix */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 12px", borderRight: "1px solid #E5E7EB", flexShrink: 0, background: "#F9FAFB" }}>
+                {/* Nigerian flag emoji */}
+                <span style={{ fontSize: 18, lineHeight: 1 }}>🇳🇬</span>
+                <span style={{ fontSize: 14, color: "#374151", fontWeight: 500 }}>+234</span>
+              </div>
+              <input
+                type="tel"
+                placeholder="Enter phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                style={{ flex: 1, border: "none", outline: "none", padding: "10px 14px", fontSize: 14, fontFamily: "inherit", color: "#111827", background: "transparent" }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <PanelLabel>Recipient Address</PanelLabel>
+            <textarea
+              placeholder="Enter Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={3}
+              style={{ ...panelInput, resize: "vertical", minHeight: 80, paddingTop: 10 }}
+            />
+          </div>
+
+          {/* Save this Recipient toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={saveRecipient}
+              onClick={() => setSaveRecipient((v) => !v)}
+              style={{
+                width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", flexShrink: 0,
+                background: saveRecipient ? BLUE : "#D1D5DB",
+                position: "relative", transition: "background 0.2s",
+                padding: 0,
+              }}
+            >
+              <span style={{
+                position: "absolute", top: 3, left: saveRecipient ? 22 : 3,
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </button>
+            <span style={{ fontSize: 14, color: "#374151" }}>Save this Recipient</span>
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!fullName.trim()}
+            style={{
+              width: "100%", padding: "14px", background: fullName.trim() ? BLUE : "#93C5FD",
+              color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600,
+              cursor: fullName.trim() ? "pointer" : "not-allowed", fontFamily: "inherit",
+              transition: "background 0.15s",
+            }}
+          >
+            Add Recipient
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PanelLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 14, fontWeight: 500, color: "#111827", marginBottom: 8 }}>{children}</div>;
+}
+
+const panelInput: React.CSSProperties = {
+  width: "100%",
+  border: "1px solid #E5E7EB",
+  borderRadius: 8,
+  outline: "none",
+  fontSize: 14,
+  color: "#111827",
+  fontFamily: "inherit",
+  padding: "10px 14px",
+  background: "#fff",
+  boxSizing: "border-box",
+};
 
 /* ── Layout helpers ── */
 
