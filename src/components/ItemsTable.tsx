@@ -215,10 +215,10 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           width: 28,
                           height: 28,
                           borderRadius: 6,
-                          border: `1.5px dashed ${isHovered ? BLUE : "transparent"}`,
+                          border: `1.5px dashed ${isHovered ? BLUE : "#D1D5DB"}`,
                           background: isHovered ? BLUE_LIGHT : "transparent",
                           cursor: "pointer",
-                          color: isHovered ? BLUE : "transparent",
+                          color: isHovered ? BLUE : "#C5C9D0",
                           transition: "border-color 0.12s, color 0.12s, background 0.12s",
                           outline: "none",
                           padding: 0,
@@ -232,8 +232,8 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                         }}
                         onBlur={(e) => {
                           if (hoveredRow !== item.id) {
-                            e.currentTarget.style.borderColor = "transparent";
-                            e.currentTarget.style.color = "transparent";
+                            e.currentTarget.style.borderColor = "#D1D5DB";
+                            e.currentTarget.style.color = "#C5C9D0";
                             e.currentTarget.style.background = "transparent";
                           }
                           e.currentTarget.style.boxShadow = "none";
