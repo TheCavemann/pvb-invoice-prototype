@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { MediaUpload, type MediaFile } from "./components/MediaUpload";
 import { CreateInvoice } from "./pages/CreateInvoice";
+import { InvoiceView } from "./pages/InvoiceView";
 
 export default function App() {
-  const [view, setView] = useState<"invoice" | "components">("invoice");
+  const [view, setView] = useState<"invoice" | "components" | "recipient">("invoice");
   const [logoFiles, setLogoFiles] = useState<MediaFile[]>([]);
   const [itemFiles, setItemFiles] = useState<MediaFile[]>([]);
 
@@ -30,6 +31,15 @@ export default function App() {
       <>
         <DevSwitcher current={view} onSwitch={setView} />
         <CreateInvoice />
+      </>
+    );
+  }
+
+  if (view === "recipient") {
+    return (
+      <>
+        <DevSwitcher current={view} onSwitch={setView} />
+        <InvoiceView />
       </>
     );
   }
@@ -142,15 +152,21 @@ function Card({ title, subtitle, children }: { title: string; subtitle: string; 
   );
 }
 
-function DevSwitcher({ current, onSwitch }: { current: "invoice" | "components"; onSwitch: (v: "invoice" | "components") => void }) {
+const DEV_VIEWS = [
+  { key: "invoice", label: "Create Invoice" },
+  { key: "recipient", label: "Recipient View" },
+  { key: "components", label: "MediaUpload" },
+] as const;
+
+function DevSwitcher({ current, onSwitch }: { current: "invoice" | "components" | "recipient"; onSwitch: (v: "invoice" | "components" | "recipient") => void }) {
   return (
     <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 9999, display: "flex", gap: 4, background: "#1E3A8A", borderRadius: 8, padding: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
-      {(["invoice", "components"] as const).map((v) => (
-        <button key={v} type="button" onClick={() => onSwitch(v)}
+      {DEV_VIEWS.map(({ key, label }) => (
+        <button key={key} type="button" onClick={() => onSwitch(key)}
           style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
-            background: current === v ? "#fff" : "transparent",
-            color: current === v ? "#1E3A8A" : "rgba(255,255,255,0.7)" }}>
-          {v === "invoice" ? "Create Invoice" : "MediaUpload preview"}
+            background: current === key ? "#fff" : "transparent",
+            color: current === key ? "#1E3A8A" : "rgba(255,255,255,0.7)" }}>
+          {label}
         </button>
       ))}
     </div>
