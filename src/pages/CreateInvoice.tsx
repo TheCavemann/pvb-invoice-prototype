@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ItemsTable, emptyItem, type LineItem } from "../components/ItemsTable";
+import { PreviewInvoice, type InvoiceData } from "../components/PreviewInvoice";
 
 const BLUE = "#1D4ED8";
 const BLUE_LIGHT = "#EFF6FF";
@@ -16,8 +17,21 @@ export function CreateInvoice() {
   const [dueDate, setDueDate] = useState<"yes" | "no">("no");
   const [wallet, setWallet] = useState<string | null>(null);
   const [walletOpen, setWalletOpen] = useState(false);
+  const [invoiceName, setInvoiceName] = useState("");
+  const [invoiceDesc, setInvoiceDesc] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   const subtotal = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
+
+  const previewData: InvoiceData = {
+    invoiceName,
+    description: invoiceDesc,
+    recipient: "",
+    items,
+    subtotal,
+    wallet,
+    dueDate: "",
+  };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#fff", fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: 14, color: "#111827", textAlign: "left" }}>
@@ -120,11 +134,11 @@ export function CreateInvoice() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
                 <div>
                   <FieldLabel>Invoice Name</FieldLabel>
-                  <input type="text" placeholder="Enter Invoice Name" style={plainInput} />
+                  <input type="text" placeholder="Enter Invoice Name" value={invoiceName} onChange={(e) => setInvoiceName(e.target.value)} style={plainInput} />
                 </div>
                 <div>
                   <FieldLabel>Description</FieldLabel>
-                  <input type="text" placeholder="Enter Invoice Description" style={plainInput} />
+                  <input type="text" placeholder="Enter Invoice Description" value={invoiceDesc} onChange={(e) => setInvoiceDesc(e.target.value)} style={plainInput} />
                 </div>
               </div>
 
@@ -246,13 +260,16 @@ export function CreateInvoice() {
             <button type="button" style={{ padding: "11px 28px", background: "#fff", color: "#374151", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
               Save to drafts
             </button>
-            <button type="button" style={{ padding: "11px 28px", background: BLUE, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", minWidth: 100 }}>
+            <button type="button" onClick={() => setShowPreview(true)} style={{ padding: "11px 28px", background: BLUE, color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", minWidth: 100 }}>
               Preview
             </button>
           </div>
         </div>
       </div>
 
+      {showPreview && (
+        <PreviewInvoice data={previewData} onClose={() => setShowPreview(false)} />
+      )}
     </div>
   );
 }
