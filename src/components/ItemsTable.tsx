@@ -4,6 +4,7 @@ import { MediaUpload, type MediaFile } from "./MediaUpload";
 const BLUE = "#1D4ED8";
 const BLUE_LIGHT = "#EFF6FF";
 const MAX_IMAGES_PER_ITEM = 4;
+const MAX_IMAGES_INVOICE = 12;
 
 export interface LineItem {
   id: string;
@@ -31,6 +32,8 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
   const [openItemId, setOpenItemId] = useState<string | null>(null);
 
   const openItem = items.find((it) => it.id === openItemId) ?? null;
+  const totalImages = items.reduce((s, it) => s + it.images.length, 0);
+  const invoiceSlotsRemaining = MAX_IMAGES_INVOICE - totalImages;
 
   function updateItem(id: string, patch: Partial<LineItem>) {
     onChange(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
@@ -82,6 +85,12 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
               const hasImages = item.images.length > 0;
               const firstUploaded = item.images.find((f) => f.status === "uploaded");
               const count = item.images.length;
+              const itemFull = count >= MAX_IMAGES_PER_ITEM;
+              const invoiceFull = invoiceSlotsRemaining <= 0;
+              const addDisabled = itemFull || invoiceFull;
+              const disabledTitle = itemFull
+                ? `Item limit reached (${MAX_IMAGES_PER_ITEM} images max)`
+                : `Invoice limit reached (${MAX_IMAGES_INVOICE} images across all items)`;
 
               return (
                 <tr
@@ -205,9 +214,10 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                       /* ── Add-image button (revealed on hover) ── */
                       <button
                         type="button"
-                        onClick={() => setOpenItemId(item.id)}
-                        aria-label={`Add image to ${item.description || "this item"}`}
-                        title="Add image to this item"
+                        disabled={addDisabled}
+                        onClick={() => !addDisabled && setOpenItemId(item.id)}
+                        aria-label={addDisabled ? disabledTitle : `Add image to ${item.description || "this item"}`}
+                        title={addDisabled ? disabledTitle : "Add image to this item"}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -215,23 +225,25 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           width: 28,
                           height: 28,
                           borderRadius: 6,
-                          border: `1.5px dashed ${isHovered ? BLUE : "#D1D5DB"}`,
-                          background: isHovered ? BLUE_LIGHT : "transparent",
-                          cursor: "pointer",
-                          color: isHovered ? BLUE : "#C5C9D0",
+                          border: `1.5px dashed ${addDisabled ? "#E5E7EB" : isHovered ? BLUE : "#D1D5DB"}`,
+                          background: addDisabled ? "transparent" : isHovered ? BLUE_LIGHT : "transparent",
+                          cursor: addDisabled ? "not-allowed" : "pointer",
+                          color: addDisabled ? "#D1D5DB" : isHovered ? BLUE : "#C5C9D0",
                           transition: "border-color 0.12s, color 0.12s, background 0.12s",
                           outline: "none",
                           padding: 0,
                           flexShrink: 0,
+                          opacity: addDisabled ? 0.5 : 1,
                         }}
                         onFocus={(e) => {
+                          if (addDisabled) return;
                           e.currentTarget.style.borderColor = BLUE;
                           e.currentTarget.style.color = BLUE;
                           e.currentTarget.style.background = BLUE_LIGHT;
                           e.currentTarget.style.boxShadow = `0 0 0 3px ${BLUE}33`;
                         }}
                         onBlur={(e) => {
-                          if (hoveredRow !== item.id) {
+                          if (!addDisabled && hoveredRow !== item.id) {
                             e.currentTarget.style.borderColor = "#D1D5DB";
                             e.currentTarget.style.color = "#C5C9D0";
                             e.currentTarget.style.background = "transparent";
@@ -268,6 +280,11 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
       {openItem && (
         <ImageModal
           item={openItem}
+          effectiveMaxFiles={Math.min(
+            MAX_IMAGES_PER_ITEM,
+            openItem.images.length + invoiceSlotsRemaining
+          )}
+          invoiceFull={invoiceSlotsRemaining <= 0}
           onClose={() => setOpenItemId(null)}
           onUpload={(files) => handleUpload(openItem.id, files)}
           onRemove={(fileId) => handleRemove(openItem.id, fileId)}
@@ -282,13 +299,15 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
 
 interface ImageModalProps {
   item: LineItem;
+  effectiveMaxFiles: number;
+  invoiceFull: boolean;
   onClose: () => void;
   onUpload: (files: MediaFile[]) => void;
   onRemove: (fileId: string) => void;
   onReorder: (files: MediaFile[]) => void;
 }
 
-function ImageModal({ item, onClose, onUpload, onRemove, onReorder }: ImageModalProps) {
+function ImageModal({ item, effectiveMaxFiles, invoiceFull, onClose, onUpload, onRemove, onReorder }: ImageModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
@@ -355,7 +374,7 @@ function ImageModal({ item, onClose, onUpload, onRemove, onReorder }: ImageModal
         {/* MediaUpload */}
         <div style={{ padding: "20px" }}>
           <MediaUpload
-            maxFiles={MAX_IMAGES_PER_ITEM}
+            maxFiles={effectiveMaxFiles}
             maxSizeMB={5}
             acceptedTypes={["image/png", "image/jpeg"]}
             files={item.images}
@@ -363,6 +382,11 @@ function ImageModal({ item, onClose, onUpload, onRemove, onReorder }: ImageModal
             onUpload={onUpload}
             onRemove={onRemove}
             onReorder={onReorder}
+            atLimitMessage={
+              invoiceFull && item.images.length < MAX_IMAGES_PER_ITEM
+                ? `Invoice limit reached (${MAX_IMAGES_INVOICE} images across all items).`
+                : undefined
+            }
           />
         </div>
 

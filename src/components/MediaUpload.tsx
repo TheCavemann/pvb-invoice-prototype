@@ -33,6 +33,8 @@ export interface MediaUploadProps {
   onReorder?: (files: MediaFile[]) => void;
   /** Optional label shown in the empty state */
   label?: string;
+  /** Override the "at limit" message (e.g. when an invoice-level cap is hit) */
+  atLimitMessage?: string;
 }
 
 const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg"];
@@ -56,6 +58,7 @@ export function MediaUpload({
   onRemove,
   onReorder,
   label = "Upload image",
+  atLimitMessage,
 }: MediaUploadProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,10 +105,15 @@ export function MediaUpload({
     if (errors.length) setValidationError(errors.join(" "));
 
     if (valid.length) {
-      // Simulate async upload: flip to "uploaded" after a short delay
       onUpload?.(valid);
+      // Simulate async upload: ~25% chance of failure per file
       setTimeout(() => {
-        onUpload?.(valid.map((f) => ({ ...f, status: "uploaded" })));
+        onUpload?.(
+          valid.map((f) => ({
+            ...f,
+            status: Math.random() < 0.25 ? ("error" as const) : ("uploaded" as const),
+          }))
+        );
       }, 800);
     }
   }
@@ -290,7 +298,7 @@ export function MediaUpload({
         </ul>
       )}
 
-      {/* Per-invoice cap reached */}
+      {/* Cap reached */}
       {atLimit && (
         <p
           style={{
@@ -300,7 +308,7 @@ export function MediaUpload({
             textAlign: "center",
           }}
         >
-          Maximum of {maxFiles} image{maxFiles !== 1 ? "s" : ""} reached.
+          {atLimitMessage ?? `Maximum of ${maxFiles} image${maxFiles !== 1 ? "s" : ""} reached.`}
         </p>
       )}
     </div>
