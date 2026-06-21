@@ -20,7 +20,7 @@ export function CreateInvoice() {
   const subtotal = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#fff", fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: 14, color: "#111827" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#fff", fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: 14, color: "#111827", textAlign: "left" }}>
 
       {/* ── Sidebar ── */}
       <aside style={{ width: 260, flexShrink: 0, background: "#fff", borderRight: "1px solid #E5E7EB", display: "flex", flexDirection: "column" }}>
