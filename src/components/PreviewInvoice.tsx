@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { MediaUpload, type MediaFile } from "./MediaUpload";
 import type { LineItem } from "./ItemsTable";
-import type { MediaFile } from "./MediaUpload";
 
 const BLUE = "#1D4ED8";
 
@@ -21,9 +21,22 @@ interface Props {
 
 type Template = "classic" | "modern";
 
+const BANNER_COLORS = [
+  "#1D4ED8", // brand blue
+  "#0F172A", // dark navy
+  "#EAB308", // yellow
+  "#F97316", // orange
+  "#EF4444", // red
+  "#22C55E", // green
+  "#15803D", // dark green
+];
+
 export function PreviewInvoice({ data, onClose }: Props) {
-  const [template, setTemplate] = useState<Template>("classic");
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const [template, setTemplate] = useState<Template>("modern");
+  const [bannerColor, setBannerColor] = useState("#0F172A");
+  const [hexInput, setHexInput] = useState("#0F172A");
+  const [logoFiles, setLogoFiles] = useState<MediaFile[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -33,57 +46,158 @@ export function PreviewInvoice({ data, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  function applyHex(val: string) {
+    const clean = val.startsWith("#") ? val : "#" + val;
+    if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+      setBannerColor(clean);
+    }
+    setHexInput(val);
+  }
+
+  function pickSwatch(color: string) {
+    setBannerColor(color);
+    setHexInput(color);
+  }
+
+  function handleLogoUpload(incoming: MediaFile[]) {
+    setLogoFiles((prev) => {
+      const byId = new Map(prev.map((f) => [f.id, f]));
+      for (const f of incoming) byId.set(f.id, f);
+      return Array.from(byId.values());
+    });
+  }
+
   return (
     <div
-      ref={overlayRef}
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
       style={{
         position: "fixed", inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
-        zIndex: 2000, overflowY: "auto", padding: "40px 24px 64px",
+        background: "rgba(0,0,0,0.45)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 2000, padding: "20px 24px",
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        textAlign: "left",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", gap: 16 }}>
-
-        {/* Template switcher + close */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 4, background: "#1E3A8A", borderRadius: 8, padding: 4 }}>
-            {(["classic", "modern"] as Template[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTemplate(t)}
-                style={{
-                  padding: "6px 16px", borderRadius: 6, border: "none", cursor: "pointer",
-                  fontSize: 13, fontWeight: 500, fontFamily: "inherit",
-                  background: template === t ? "#fff" : "transparent",
-                  color: template === t ? "#1E3A8A" : "rgba(255,255,255,0.75)",
-                  textTransform: "capitalize",
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+      <div
+        ref={modalRef}
+        style={{
+          width: "100%", maxWidth: 1100,
+          height: "calc(100vh - 40px)", maxHeight: 860,
+          background: "#fff",
+          borderRadius: 12,
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
+          overflow: "hidden",
+        }}
+      >
+        {/* ── Modal header ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "18px 28px", borderBottom: "1px solid #E5E7EB", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>Preview Invoice</span>
           <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close preview"
-            style={{ background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}
+            type="button" onClick={onClose} aria-label="Close"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 4, display: "flex", borderRadius: 6 }}
           >
-            <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-            Close
           </button>
         </div>
 
-        {/* Invoice document */}
-        {template === "classic"
-          ? <ClassicTemplate data={data} />
-          : <ModernTemplate data={data} />
-        }
+        {/* ── Body: Customize | Invoice ── */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+          {/* Left: Customize panel */}
+          <div style={{
+            width: 340, flexShrink: 0,
+            background: "#F9FAFB", borderRight: "1px solid #E5E7EB",
+            overflowY: "auto", padding: "28px 24px",
+          }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#111827", marginBottom: 24 }}>Customize</div>
+
+            {/* Invoice type */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827", marginBottom: 12 }}>Invoice type</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(["Classic", "Modern"] as const).map((t) => {
+                  const active = template === t.toLowerCase();
+                  return (
+                    <button
+                      key={t} type="button"
+                      onClick={() => setTemplate(t.toLowerCase() as Template)}
+                      style={{
+                        padding: "6px 20px", borderRadius: 20, cursor: "pointer",
+                        fontSize: 13, fontFamily: "inherit",
+                        border: `1.5px solid ${active ? "#374151" : "#D1D5DB"}`,
+                        background: "#fff",
+                        color: active ? "#111827" : "#6B7280",
+                        fontWeight: active ? 600 : 400,
+                      }}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Banner color */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827", marginBottom: 12 }}>Banner</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                {BANNER_COLORS.map((c) => (
+                  <button
+                    key={c} type="button"
+                    onClick={() => pickSwatch(c)}
+                    aria-label={c}
+                    style={{
+                      width: 36, height: 36, borderRadius: 8,
+                      background: c, border: "none", cursor: "pointer",
+                      outline: bannerColor === c ? `3px solid ${c}` : "none",
+                      outlineOffset: 2,
+                      boxShadow: bannerColor === c ? "0 0 0 2px #fff, 0 0 0 4px " + c : "none",
+                    }}
+                  />
+                ))}
+              </div>
+              <input
+                type="text"
+                value={hexInput}
+                onChange={(e) => applyHex(e.target.value)}
+                style={{
+                  padding: "8px 12px", border: "1.5px solid #E5E7EB", borderRadius: 8,
+                  fontSize: 13, fontFamily: "inherit", color: "#374151", width: 120,
+                  outline: "none", boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {/* Logo */}
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827", marginBottom: 12 }}>Logo</div>
+              <MediaUpload
+                maxFiles={1}
+                maxSizeMB={5}
+                acceptedTypes={["image/png", "image/jpeg"]}
+                files={logoFiles}
+                label="Upload logo"
+                onUpload={handleLogoUpload}
+                onRemove={(id) => setLogoFiles((prev) => prev.filter((f) => f.id !== id))}
+                onReorder={setLogoFiles}
+              />
+            </div>
+          </div>
+
+          {/* Right: Invoice preview */}
+          <div style={{ flex: 1, overflowY: "auto", background: "#F3F4F6", padding: "28px 32px" }}>
+            {template === "modern"
+              ? <ModernInvoice data={data} bannerColor={bannerColor} logoFiles={logoFiles} />
+              : <ClassicInvoice data={data} bannerColor={bannerColor} logoFiles={logoFiles} />
+            }
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -96,204 +210,298 @@ function uploadedImages(images: MediaFile[]) {
 }
 
 function fmt(n: number) {
-  return "₦" + n.toLocaleString("en-NG", { minimumFractionDigits: 2 });
+  return n.toLocaleString("en-NG", { minimumFractionDigits: 0 });
 }
 
-function ItemImageStrip({ images }: { images: MediaFile[] }) {
+function ItemImages({ images }: { images: MediaFile[] }) {
   const ready = uploadedImages(images);
   if (!ready.length) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
       {ready.map((f) => (
         <img
-          key={f.id}
-          src={f.url}
-          alt={f.caption || f.name}
-          style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 6, border: "1px solid #E5E7EB", flexShrink: 0 }}
+          key={f.id} src={f.url} alt={f.caption || f.name}
+          style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6, border: "1px solid #E5E7EB", flexShrink: 0 }}
         />
       ))}
     </div>
   );
 }
 
-/* ── Classic template ── */
+interface TemplateProps {
+  data: InvoiceData;
+  bannerColor: string;
+  logoFiles: MediaFile[];
+}
 
-function ClassicTemplate({ data }: { data: InvoiceData }) {
-  const { invoiceName, items, subtotal } = data;
+/* ── Modern invoice ── */
+
+function ModernInvoice({ data, bannerColor, logoFiles }: TemplateProps) {
+  const { invoiceName, description, items, subtotal, dueDate } = data;
+  const logo = logoFiles.find((f) => f.status === "uploaded");
 
   return (
-    <div style={{
-      background: "#fff", borderRadius: 12,
-      boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      overflow: "hidden",
-    }}>
-      {/* Header band */}
-      <div style={{ background: BLUE, padding: "28px 32px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div style={{ background: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+
+      {/* Dark header band */}
+      <div style={{ background: bannerColor, padding: "24px 28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 32 }}>
+
+          {/* Left: from */}
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>INVOICE</div>
-            {invoiceName && <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 2 }}>{invoiceName}</div>}
+            {logo && (
+              <img src={logo.url} alt="Logo" style={{ height: 36, marginBottom: 12, objectFit: "contain" }} />
+            )}
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Hermiston, Hegmann And Sauer</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
+              22666 Kshlerin Park<br />
+              2347065705327<br />
+              arinze@yopmail.com
+            </div>
           </div>
+
+          {/* Right: bill to */}
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.06em" }}>From</div>
-            <div style={{ color: "#fff", fontWeight: 600, fontSize: 14, marginTop: 2 }}>Hermiston, Hegmann And Sauer</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>Bill To: <span style={{ color: "#fff", fontWeight: 600 }}>Ifeanyi Nwune</span></div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
+              21 Muyiwa Opaleye Street, Lekki Lagos<br />
+              +2347065705327<br />
+              ifeanyinwune@gmail.com
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Body */}
-      <div style={{ padding: "28px 32px" }}>
-        {/* Items table */}
+      {/* Invoice meta row */}
+      <div style={{ padding: "18px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>{invoiceName || "Invoice"}</div>
+          {description && <div style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>{description}</div>}
+        </div>
+        {dueDate && (
+          <div style={{ fontSize: 13, color: "#6B7280" }}>Due Date <span style={{ color: "#111827", fontWeight: 500 }}>{dueDate}</span></div>
+        )}
+      </div>
+
+      {/* Items table */}
+      <div style={{ padding: "18px 28px 0" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: "2px solid #E5E7EB" }}>
-              <th style={{ textAlign: "left", padding: "8px 0", color: "#6B7280", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", width: "50%" }}>Description</th>
-              <th style={{ textAlign: "center", padding: "8px 0", color: "#6B7280", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>Qty</th>
-              <th style={{ textAlign: "right", padding: "8px 0", color: "#6B7280", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>Unit Price</th>
-              <th style={{ textAlign: "right", padding: "8px 0", color: "#6B7280", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em" }}>Amount</th>
+            <tr style={{ background: "#F9FAFB" }}>
+              <Th align="left" first>Item</Th>
+              <Th align="center">Quantity</Th>
+              <Th align="right">Unity Price (₦)</Th>
+              <Th align="right" last>Amount (₦)</Th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => {
               const amount = item.quantity * item.unitPrice;
-              const hasImages = uploadedImages(item.images).length > 0;
               return (
                 <tr key={item.id} style={{ borderBottom: "1px solid #F3F4F6" }}>
-                  <td style={{ padding: hasImages ? "14px 16px 14px 0" : "14px 16px 14px 0", verticalAlign: "top" }}>
-                    <div style={{ color: "#111827", fontWeight: 500 }}>
-                      {item.description || <span style={{ color: "#9CA3AF" }}>—</span>}
-                    </div>
-                    <ItemImageStrip images={item.images} />
+                  <td style={{ padding: "14px 12px 14px 0", verticalAlign: "top", color: "#111827" }}>
+                    <div>{item.description || <span style={{ color: "#9CA3AF" }}>—</span>}</div>
+                    <ItemImages images={item.images} />
                   </td>
-                  <td style={{ padding: "14px 12px", textAlign: "center", color: "#374151", verticalAlign: "top" }}>{item.quantity}</td>
-                  <td style={{ padding: "14px 12px", textAlign: "right", color: "#374151", verticalAlign: "top" }}>{fmt(item.unitPrice)}</td>
-                  <td style={{ padding: "14px 0 14px 12px", textAlign: "right", color: "#111827", fontWeight: 600, verticalAlign: "top" }}>{fmt(amount)}</td>
+                  <td style={{ padding: "14px 12px", textAlign: "center", verticalAlign: "top", color: "#374151" }}>{item.quantity}</td>
+                  <td style={{ padding: "14px 12px", textAlign: "right", verticalAlign: "top", color: "#374151" }}>{fmt(item.unitPrice)}</td>
+                  <td style={{ padding: "14px 0 14px 12px", textAlign: "right", verticalAlign: "top", color: "#111827", fontWeight: 500 }}>{fmt(amount)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      </div>
 
-        {/* Totals */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-          <div style={{ minWidth: 220 }}>
-            <TotalRow label="Subtotal" value={fmt(subtotal)} />
-            <div style={{ borderTop: "2px solid #111827", marginTop: 8, paddingTop: 8 }}>
-              <TotalRow label="Total" value={fmt(subtotal)} bold />
-            </div>
+      {/* Notes + Totals */}
+      <div style={{ padding: "20px 28px", display: "flex", justifyContent: "space-between", gap: 24, borderTop: "1px solid #F3F4F6" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Notes:</div>
+          {description && <div style={{ fontSize: 12, color: "#6B7280" }}>{description}</div>}
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
+            <span style={{ color: "#6B7280" }}>Subtotal</span>
+            <span style={{ color: "#111827", fontWeight: 500 }}>₦ {fmt(subtotal)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 4px", fontSize: 14, borderTop: "1px solid #E5E7EB", marginTop: 6 }}>
+            <span style={{ fontWeight: 700, color: "#111827" }}>TOTAL</span>
+            <span style={{ fontWeight: 700, color: "#111827" }}>₦ {fmt(subtotal)}</span>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid #F3F4F6", textAlign: "center", color: "#9CA3AF", fontSize: 12 }}>
-          Thank you for your business
+      {/* Payment Method */}
+      <div style={{ padding: "20px 28px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "space-between", gap: 24 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Payment Method</div>
+          <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.6, maxWidth: 260 }}>
+            Complete payment by making transfer to the account details provided
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Account Details</div>
+          <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.8 }}>
+            3324164287<br />
+            FAAS (SANDBOX)<br />
+            Hermiston Hegmann And Sauer-7408
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: "16px 28px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 12, color: "#6B7280" }}>Piggyvest Business — Maximize Your Business Money.</div>
+        <div style={{ fontSize: 12 }}>
+          Email us at{" "}
+          <span style={{ color: BLUE }}>support@piggyvest.business</span>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Modern template ── */
+/* ── Classic invoice ── */
 
-function ModernTemplate({ data }: { data: InvoiceData }) {
-  const { invoiceName, items, subtotal } = data;
+function ClassicInvoice({ data, bannerColor, logoFiles }: TemplateProps) {
+  const { invoiceName, description, items, subtotal, dueDate } = data;
+  const logo = logoFiles.find((f) => f.status === "uploaded");
 
   return (
-    <div style={{
-      background: "#fff", borderRadius: 12,
-      boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    }}>
-      {/* Header */}
-      <div style={{ padding: "32px 32px 24px", borderBottom: "1px solid #F3F4F6" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div style={{ background: "#fff", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+
+      {/* Dark header band */}
+      <div style={{ background: bannerColor, padding: "24px 28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 32 }}>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#111827", letterSpacing: "-0.03em" }}>
-              {invoiceName || "Invoice"}
-            </div>
-            <div style={{ marginTop: 8, display: "flex", gap: 24 }}>
-              <MetaField label="From" value="Hermiston, Hegmann And Sauer" />
+            {logo && (
+              <img src={logo.url} alt="Logo" style={{ height: 36, marginBottom: 12, objectFit: "contain" }} />
+            )}
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Hermiston, Hegmann And Sauer</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
+              22666 Kshlerin Park<br />
+              2347065705327<br />
+              arinze@yopmail.com
             </div>
           </div>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: BLUE, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="24" height="24" viewBox="0 0 20 20" fill="#fff">
-              <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-            </svg>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>Bill To: <span style={{ color: "#fff", fontWeight: 600 }}>Ifeanyi Nwune</span></div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
+              21 Muyiwa Opaleye Street, Lekki Lagos<br />
+              +2347065705327<br />
+              ifeanyinwune@gmail.com
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Items */}
-      <div style={{ padding: "24px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Items</div>
-        {items.map((item) => {
-          const amount = item.quantity * item.unitPrice;
-          const ready = uploadedImages(item.images);
-          return (
-            <div key={item.id} style={{ background: "#F9FAFB", borderRadius: 10, padding: "14px 16px", border: "1px solid #F3F4F6" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: "#111827", fontSize: 14 }}>
-                    {item.description || <span style={{ color: "#9CA3AF", fontWeight: 400 }}>Unnamed item</span>}
-                  </div>
-                  <div style={{ color: "#6B7280", fontSize: 12, marginTop: 2 }}>
-                    {item.quantity} × {fmt(item.unitPrice)}
-                  </div>
-                  {/* Images below description */}
-                  {ready.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-                      {ready.map((f) => (
-                        <img
-                          key={f.id}
-                          src={f.url}
-                          alt={f.caption || f.name}
-                          style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, border: "1px solid #E5E7EB", flexShrink: 0 }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", flexShrink: 0 }}>
-                  {fmt(amount)}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* Invoice meta */}
+      <div style={{ padding: "18px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>{invoiceName || "Invoice"}</div>
+          {description && <div style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>{description}</div>}
+        </div>
+        {dueDate && (
+          <div style={{ fontSize: 13, color: "#6B7280" }}>Due Date <span style={{ color: "#111827", fontWeight: 500 }}>{dueDate}</span></div>
+        )}
       </div>
 
-      {/* Totals */}
-      <div style={{ padding: "16px 32px 32px", borderTop: "1px solid #F3F4F6" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{ minWidth: 240 }}>
-            <TotalRow label="Subtotal" value={fmt(subtotal)} />
-            <div style={{ borderTop: "2px solid #111827", marginTop: 8, paddingTop: 8 }}>
-              <TotalRow label="Total" value={fmt(subtotal)} bold />
-            </div>
+      {/* Items table — classic has a visible border on the table */}
+      <div style={{ padding: "18px 28px 0" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, border: "1px solid #E5E7EB", borderRadius: 8, overflow: "hidden" }}>
+          <thead>
+            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB" }}>
+              <Th align="left" first>Item</Th>
+              <Th align="center">Quantity</Th>
+              <Th align="right">Unity Price (₦)</Th>
+              <Th align="right" last>Amount (₦)</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, i) => {
+              const amount = item.quantity * item.unitPrice;
+              const last = i === items.length - 1;
+              return (
+                <tr key={item.id} style={{ borderBottom: last ? "none" : "1px solid #F3F4F6" }}>
+                  <td style={{ padding: "14px 12px 14px 16px", verticalAlign: "top", color: "#111827" }}>
+                    <div>{item.description || <span style={{ color: "#9CA3AF" }}>—</span>}</div>
+                    <ItemImages images={item.images} />
+                  </td>
+                  <td style={{ padding: "14px 12px", textAlign: "center", verticalAlign: "top", color: "#374151" }}>{item.quantity}</td>
+                  <td style={{ padding: "14px 12px", textAlign: "right", verticalAlign: "top", color: "#374151" }}>{fmt(item.unitPrice)}</td>
+                  <td style={{ padding: "14px 16px 14px 12px", textAlign: "right", verticalAlign: "top", color: "#111827", fontWeight: 500 }}>{fmt(amount)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Notes + Totals */}
+      <div style={{ padding: "20px 28px", display: "flex", justifyContent: "space-between", gap: 24, borderTop: "1px solid #F3F4F6" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Notes:</div>
+          {description && <div style={{ fontSize: 12, color: "#6B7280" }}>{description}</div>}
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13 }}>
+            <span style={{ color: "#6B7280" }}>Subtotal</span>
+            <span style={{ color: "#111827", fontWeight: 500 }}>₦ {fmt(subtotal)}</span>
           </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 4px", fontSize: 14, borderTop: "1px solid #E5E7EB", marginTop: 6 }}>
+            <span style={{ fontWeight: 700, color: "#111827" }}>TOTAL</span>
+            <span style={{ fontWeight: 700, color: "#111827" }}>₦ {fmt(subtotal)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Method */}
+      <div style={{ padding: "20px 28px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "space-between", gap: 24 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Payment Method</div>
+          <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.6, maxWidth: 260 }}>
+            Complete payment by making transfer to the account details provided
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Account Details</div>
+          <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.8 }}>
+            3324164287<br />
+            FAAS (SANDBOX)<br />
+            Hermiston Hegmann And Sauer-7408
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: "16px 28px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 12, color: "#6B7280" }}>Piggyvest Business — Maximize Your Business Money.</div>
+        <div style={{ fontSize: 12 }}>
+          Email us at{" "}
+          <span style={{ color: BLUE }}>support@piggyvest.business</span>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Tiny shared sub-components ── */
+/* ── Table header cell ── */
 
-function TotalRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function Th({ children, align, first, last }: { children: React.ReactNode; align: "left" | "center" | "right"; first?: boolean; last?: boolean }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: bold ? 15 : 13 }}>
-      <span style={{ color: bold ? "#111827" : "#6B7280", fontWeight: bold ? 700 : 400 }}>{label}</span>
-      <span style={{ color: "#111827", fontWeight: bold ? 700 : 500 }}>{value}</span>
-    </div>
-  );
-}
-
-function MetaField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontSize: 13, color: "#374151", fontWeight: 500, marginTop: 2 }}>{value}</div>
-    </div>
+    <th style={{
+      padding: "10px 12px",
+      paddingLeft: first ? 16 : 12,
+      paddingRight: last ? 16 : 12,
+      textAlign: align,
+      fontSize: 12,
+      fontWeight: 600,
+      color: "#6B7280",
+      background: "#F9FAFB",
+      borderBottom: "1px solid #E5E7EB",
+      whiteSpace: "nowrap",
+    }}>
+      {children}
+    </th>
   );
 }
