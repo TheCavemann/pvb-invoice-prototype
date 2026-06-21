@@ -57,6 +57,7 @@ export function CreateInvoice({
   const [showPreview, setShowPreview] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
+  const [sentToast, setSentToast] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>(INITIAL_RECIPIENTS);
   const [recipient, setRecipient] = useState<Recipient | null>(null);
   const [recipientOpen, setRecipientOpen] = useState(false);
@@ -333,7 +334,16 @@ export function CreateInvoice({
       </div>
 
       {showPreview && (
-        <PreviewInvoice data={previewData} onClose={() => setShowPreview(false)} />
+        <PreviewInvoice
+          data={previewData}
+          onClose={() => setShowPreview(false)}
+          onSaveDraft={handleSaveDraft}
+          onSend={() => {
+            setShowPreview(false);
+            setSentToast(true);
+            setTimeout(() => setSentToast(false), 3000);
+          }}
+        />
       )}
 
       {/* Drafts slide-over panel */}
@@ -359,6 +369,22 @@ export function CreateInvoice({
             setShowAddRecipient(false);
           }}
         />
+      )}
+
+      {/* "Sent" toast */}
+      {sentToast && (
+        <div role="status" style={{
+          position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          background: "#111827", color: "#fff", fontSize: 13, padding: "10px 18px",
+          borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9000,
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="#4ADE80">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Invoice sent successfully
+        </div>
       )}
 
       {/* "Saved" toast */}
