@@ -4,6 +4,8 @@ import { PreviewInvoice, type InvoiceData } from "../components/PreviewInvoice";
 import type { Draft } from "../types/draft";
 import { makeDraftId } from "../types/draft";
 import type { MediaFile } from "../components/MediaUpload";
+import type { SentInvoice } from "../types/sentInvoice";
+import { makeSentInvoiceId } from "../types/sentInvoice";
 
 const BLUE = "#1D4ED8";
 const BLUE_LIGHT = "#EFF6FF";
@@ -35,6 +37,7 @@ interface CreateInvoiceProps {
   onDeleteDraft?: (id: string) => void;
   onOpenDraft?: (draft: Draft) => void;
   onClearOpenDraft?: () => void;
+  onSendInvoice?: (invoice: SentInvoice) => void;
 }
 
 export function CreateInvoice({
@@ -44,6 +47,7 @@ export function CreateInvoice({
   onDeleteDraft,
   onOpenDraft,
   onClearOpenDraft,
+  onSendInvoice,
 }: CreateInvoiceProps) {
   // Track which draft this form corresponds to (so re-saving updates it)
   const draftIdRef = useRef<string>(initialDraft?.id ?? makeDraftId());
@@ -338,7 +342,22 @@ export function CreateInvoice({
           data={previewData}
           onClose={() => setShowPreview(false)}
           onSaveDraft={handleSaveDraft}
-          onSend={() => {
+          onSend={({ bannerColor, logoFiles }) => {
+            const invoice: SentInvoice = {
+              id: makeSentInvoiceId(),
+              sentAt: Date.now(),
+              status: "unpaid",
+              invoiceName,
+              description: invoiceDesc,
+              recipient: recipient?.name ?? "",
+              items,
+              subtotal,
+              wallet,
+              dueDate: "",
+              bannerColor,
+              logoFiles,
+            };
+            onSendInvoice?.(invoice);
             setShowPreview(false);
             setSentToast(true);
             setTimeout(() => setSentToast(false), 3000);

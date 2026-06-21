@@ -3,6 +3,7 @@ import { InvoiceDocument } from "../components/InvoiceDocument";
 import type { InvoiceData } from "../components/InvoiceDocument";
 import type { MediaFile } from "../components/MediaUpload";
 import { emptyItem } from "../components/ItemsTable";
+import type { SentInvoice } from "../types/sentInvoice";
 
 const BLUE = "#1D4ED8";
 
@@ -42,9 +43,17 @@ function useIsMobile(breakpoint = 640) {
 
 /* ── Page ── */
 
-export function InvoiceView() {
+interface Props {
+  invoice?: SentInvoice;
+}
+
+export function InvoiceView({ invoice }: Props) {
   const isMobile = useIsMobile();
   const [paid, setPaid] = useState(false);
+
+  const data: InvoiceData & { bannerColor: string; logoFiles: MediaFile[] } = invoice
+    ? { ...invoice }
+    : MOCK;
 
   return (
     <div style={{
@@ -101,10 +110,10 @@ export function InvoiceView() {
         {/* Invoice document */}
         <div style={{ borderRadius: isMobile ? 0 : 10, overflow: "hidden", boxShadow: isMobile ? "none" : "0 2px 16px rgba(0,0,0,0.08)" }}>
           <InvoiceDocument
-            data={MOCK}
+            data={data}
             template="modern"
-            bannerColor={MOCK.bannerColor}
-            logoFiles={MOCK.logoFiles}
+            bannerColor={data.bannerColor}
+            logoFiles={data.logoFiles}
             mobile={isMobile}
           />
         </div>
@@ -134,7 +143,7 @@ export function InvoiceView() {
                 letterSpacing: "-0.01em",
               }}
             >
-              Pay ₦{MOCK.subtotal.toLocaleString("en-NG")}
+              Pay ₦{data.subtotal.toLocaleString("en-NG")}
             </button>
             <p style={{ margin: "10px 0 0", fontSize: 12, color: "#9CA3AF", textAlign: "center" }}>
               Secured by PiggyVest Business · SSL encrypted

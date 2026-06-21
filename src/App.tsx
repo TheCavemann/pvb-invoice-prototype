@@ -2,14 +2,18 @@ import { useState } from "react";
 import { MediaUpload, type MediaFile } from "./components/MediaUpload";
 import { CreateInvoice } from "./pages/CreateInvoice";
 import { InvoiceView } from "./pages/InvoiceView";
+import { InvoicesList } from "./pages/InvoicesList";
 import type { Draft } from "./types/draft";
+import type { SentInvoice } from "./types/sentInvoice";
 
 export default function App() {
-  const [view, setView] = useState<"invoice" | "components" | "recipient">("invoice");
+  const [view, setView] = useState<"invoice" | "components" | "recipient" | "list">("invoice");
   const [logoFiles, setLogoFiles] = useState<MediaFile[]>([]);
   const [itemFiles, setItemFiles] = useState<MediaFile[]>([]);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [openDraft, setOpenDraft] = useState<Draft | null>(null);
+  const [sentInvoices, setSentInvoices] = useState<SentInvoice[]>([]);
+  const [viewingInvoice, setViewingInvoice] = useState<SentInvoice | undefined>(undefined);
 
   function handleUpload(
     incoming: MediaFile[],
@@ -41,6 +45,22 @@ export default function App() {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
   }
 
+  function addSentInvoice(invoice: SentInvoice) {
+    setSentInvoices((prev) => [invoice, ...prev]);
+  }
+
+  if (view === "list") {
+    return (
+      <>
+        <DevSwitcher current={view} onSwitch={setView} />
+        <InvoicesList
+          invoices={sentInvoices}
+          onView={(inv) => { setViewingInvoice(inv); setView("recipient"); }}
+        />
+      </>
+    );
+  }
+
   if (view === "invoice") {
     return (
       <>
@@ -52,6 +72,7 @@ export default function App() {
           onDeleteDraft={deleteDraft}
           onOpenDraft={(d) => setOpenDraft(d)}
           onClearOpenDraft={() => setOpenDraft(null)}
+          onSendInvoice={(inv) => { addSentInvoice(inv); setView("list"); }}
         />
       </>
     );
@@ -61,7 +82,7 @@ export default function App() {
     return (
       <>
         <DevSwitcher current={view} onSwitch={setView} />
-        <InvoiceView />
+        <InvoiceView invoice={viewingInvoice} />
       </>
     );
   }
@@ -176,11 +197,12 @@ function Card({ title, subtitle, children }: { title: string; subtitle: string; 
 
 const DEV_VIEWS = [
   { key: "invoice", label: "Create Invoice" },
+  { key: "list", label: "Invoices List" },
   { key: "recipient", label: "Recipient View" },
   { key: "components", label: "MediaUpload" },
 ] as const;
 
-function DevSwitcher({ current, onSwitch }: { current: "invoice" | "components" | "recipient"; onSwitch: (v: "invoice" | "components" | "recipient") => void }) {
+function DevSwitcher({ current, onSwitch }: { current: "invoice" | "components" | "recipient" | "list"; onSwitch: (v: "invoice" | "components" | "recipient" | "list") => void }) {
   return (
     <div style={{ position: "fixed", bottom: 20, right: 20, zIndex: 9999, display: "flex", gap: 4, background: "#1E3A8A", borderRadius: 8, padding: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
       {DEV_VIEWS.map(({ key, label }) => (

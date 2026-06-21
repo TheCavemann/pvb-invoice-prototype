@@ -21,7 +21,7 @@ interface Props {
   data: import("./InvoiceDocument").InvoiceData;
   onClose: () => void;
   onSaveDraft?: () => void;
-  onSend?: () => void;
+  onSend?: (customization: { bannerColor: string; logoFiles: MediaFile[] }) => void;
 }
 
 export function PreviewInvoice({ data, onClose, onSaveDraft, onSend }: Props) {
@@ -166,7 +166,7 @@ export function PreviewInvoice({ data, onClose, onSaveDraft, onSend }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => { onSend?.(); }}
+            onClick={() => { onSend?.({ bannerColor, logoFiles }); }}
             style={{
               padding: "10px 28px", background: BLUE, color: "#fff",
               border: "none", borderRadius: 8, fontSize: 14,
