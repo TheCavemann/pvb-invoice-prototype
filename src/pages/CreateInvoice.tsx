@@ -425,19 +425,27 @@ function WalletPicker({ wallet, open, onToggle, onClose, onSelect }: WalletPicke
               type="button"
               onClick={() => onSelect(name)}
               style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 14px",
+                width: "100%", display: "flex", alignItems: "center", gap: 12,
+                padding: "12px 14px",
                 background: wallet === name ? BLUE_LIGHT : "transparent",
                 border: "none", borderBottom: "1px solid #F3F4F6",
                 cursor: "pointer", fontFamily: "inherit", textAlign: "left",
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="#9CA3AF" style={{ flexShrink: 0 }}>
-                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-              </svg>
-              <span style={{ flex: 1, fontSize: 13, fontWeight: wallet === name ? 600 : 400, color: "#111827" }}>{name}</span>
-              <span style={{ fontSize: 12, color: "#9CA3AF", textDecoration: "line-through" }}>{bal}</span>
+              {/* Colored square icon background */}
+              <div style={{
+                width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+                background: "#FCE7E7",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="#F87171">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>{name}</div>
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2, textDecoration: "line-through" }}>{bal}</div>
+              </div>
             </button>
           ))}
         </div>
