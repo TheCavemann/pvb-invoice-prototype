@@ -35,6 +35,8 @@ export interface MediaUploadProps {
   label?: string;
   /** Override the "at limit" message (e.g. when an invoice-level cap is hit) */
   atLimitMessage?: string;
+  /** Used as fallback alt text context: "Reference image for [itemDescription]" */
+  itemDescription?: string;
 }
 
 const DEFAULT_ACCEPTED_TYPES = ["image/png", "image/jpeg"];
@@ -59,6 +61,7 @@ export function MediaUpload({
   onReorder,
   label = "Upload image",
   atLimitMessage,
+  itemDescription,
 }: MediaUploadProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -275,6 +278,7 @@ export function MediaUpload({
       {/* Attached files */}
       {hasFiles && (
         <ul
+          aria-label="Attached images"
           style={{
             listStyle: "none",
             margin: "12px 0 0",
@@ -289,7 +293,21 @@ export function MediaUpload({
               key={file.id}
               file={file}
               index={index}
+              total={files.length}
+              itemDescription={itemDescription}
               onRemove={() => onRemove?.(file.id)}
+              onMoveUp={() => {
+                if (index === 0) return;
+                const reordered = [...files];
+                [reordered[index - 1], reordered[index]] = [reordered[index], reordered[index - 1]];
+                onReorder?.(reordered);
+              }}
+              onMoveDown={() => {
+                if (index === files.length - 1) return;
+                const reordered = [...files];
+                [reordered[index], reordered[index + 1]] = [reordered[index + 1], reordered[index]];
+                onReorder?.(reordered);
+              }}
               onDragStart={() => onItemDragStart(index)}
               onDragOver={(e) => onItemDragOver(e, index)}
               onDragEnd={onItemDragEnd}
@@ -320,7 +338,11 @@ export function MediaUpload({
 interface FileRowProps {
   file: MediaFile;
   index: number;
+  total: number;
+  itemDescription?: string;
   onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragEnd: () => void;
@@ -328,13 +350,19 @@ interface FileRowProps {
 
 function FileRow({
   file,
+  index,
+  total,
+  itemDescription,
   onRemove,
+  onMoveUp,
+  onMoveDown,
   onDragStart,
   onDragOver,
   onDragEnd,
 }: FileRowProps) {
   const isUploading = file.status === "uploading";
   const isError = file.status === "error";
+  const altText = file.caption || (itemDescription ? `Reference image for ${itemDescription}` : "Reference image");
 
   return (
     <li
@@ -342,6 +370,7 @@ function FileRow({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
+      aria-label={`${file.name}, image ${index + 1} of ${total}`}
       style={{
         display: "flex",
         alignItems: "center",
@@ -354,7 +383,41 @@ function FileRow({
         userSelect: "none",
       }}
     >
-      {/* Drag handle */}
+      {/* Keyboard reorder buttons (visually hidden, screen-reader accessible) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
+        <button
+          type="button"
+          onClick={onMoveUp}
+          disabled={index === 0}
+          aria-label={`Move ${file.name} up`}
+          tabIndex={index === 0 ? -1 : 0}
+          style={{
+            background: "none", border: "none", cursor: index === 0 ? "default" : "pointer",
+            padding: 2, color: index === 0 ? "#D1D5DB" : "#9CA3AF", display: "flex", borderRadius: 3,
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={onMoveDown}
+          disabled={index === total - 1}
+          aria-label={`Move ${file.name} down`}
+          tabIndex={index === total - 1 ? -1 : 0}
+          style={{
+            background: "none", border: "none", cursor: index === total - 1 ? "default" : "pointer",
+            padding: 2, color: index === total - 1 ? "#D1D5DB" : "#9CA3AF", display: "flex", borderRadius: 3,
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Drag handle (decorative) */}
       <svg
         width="14"
         height="14"
@@ -391,7 +454,7 @@ function FileRow({
         ) : (
           <img
             src={file.url}
-            alt={file.caption || `Reference image`}
+            alt={altText}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         )}
@@ -427,7 +490,7 @@ function FileRow({
         </p>
       </div>
 
-      {/* Remove */}
+      {/* Remove — min 44px touch target */}
       <button
         type="button"
         onClick={onRemove}
@@ -436,26 +499,25 @@ function FileRow({
           background: "none",
           border: "none",
           cursor: "pointer",
-          padding: 4,
-          borderRadius: 4,
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 6,
           color: "#DC2626",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           flexShrink: 0,
+          gap: 3,
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path
             fillRule="evenodd"
             d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
             clipRule="evenodd"
           />
         </svg>
-        <span
-          style={{ fontSize: 12, marginLeft: 3, fontWeight: 500 }}
-        >
-          Remove file
-        </span>
+        <span style={{ fontSize: 12, fontWeight: 500 }}>Remove</span>
       </button>
     </li>
   );

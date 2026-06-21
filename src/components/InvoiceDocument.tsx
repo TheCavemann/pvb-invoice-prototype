@@ -34,7 +34,7 @@ export function fmtNGN(n: number) {
   return n.toLocaleString("en-NG", { minimumFractionDigits: 0 });
 }
 
-export function ItemImages({ images, size = 60 }: { images: MediaFile[]; size?: number }) {
+export function ItemImages({ images, size = 60, itemDescription }: { images: MediaFile[]; size?: number; itemDescription?: string }) {
   const ready = uploadedImages(images);
   if (!ready.length) return null;
   return (
@@ -43,7 +43,7 @@ export function ItemImages({ images, size = 60 }: { images: MediaFile[]; size?: 
         <img
           key={f.id}
           src={f.url}
-          alt={f.caption || f.name}
+          alt={f.caption || (itemDescription ? `Reference image for ${itemDescription}` : f.name)}
           style={{
             width: size, height: size,
             objectFit: "cover", borderRadius: 6,
@@ -167,7 +167,7 @@ function ItemsTable({
               <tr key={item.id} style={{ borderBottom: isLast && bordered ? "none" : "1px solid #F3F4F6" }}>
                 <td style={{ padding: "14px 12px 14px 16px", verticalAlign: "top", color: "#111827" }}>
                   <div>{item.description || <span style={{ color: "#9CA3AF" }}>—</span>}</div>
-                  <ItemImages images={item.images} />
+                  <ItemImages images={item.images} itemDescription={item.description || undefined} />
                 </td>
                 <td style={{ padding: "14px 12px", textAlign: "center", verticalAlign: "top", color: "#374151" }}>{item.quantity}</td>
                 <td style={{ padding: "14px 12px", textAlign: "right", verticalAlign: "top", color: "#374151" }}>{fmtNGN(item.unitPrice)}</td>
@@ -198,7 +198,7 @@ function ItemsMobile({ items }: { items: LineItem[] }) {
                   <div style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
                     {item.quantity} × ₦{fmtNGN(item.unitPrice)}
                   </div>
-                  <ItemImages images={item.images} size={72} />
+                  <ItemImages images={item.images} size={72} itemDescription={item.description || undefined} />
                 </div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", flexShrink: 0 }}>
                   ₦{fmtNGN(amount)}

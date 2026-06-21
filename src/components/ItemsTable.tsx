@@ -163,9 +163,12 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           position: "relative",
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "center",
                           background: "none",
                           border: "none",
                           cursor: "pointer",
+                          minWidth: 44,
+                          minHeight: 44,
                           padding: 0,
                         }}
                       >
@@ -185,7 +188,7 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           {firstUploaded ? (
                             <img
                               src={firstUploaded.url}
-                              alt={firstUploaded.caption || "Attached image"}
+                              alt={firstUploaded.caption || `Reference image for ${item.description || "this item"}`}
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />
                           ) : (
@@ -228,9 +231,11 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          width: 28,
-                          height: 28,
-                          borderRadius: 6,
+                          minWidth: 44,
+                          minHeight: 44,
+                          width: 44,
+                          height: 44,
+                          borderRadius: 8,
                           border: `1.5px dashed ${addDisabled ? "#E5E7EB" : isHovered ? BLUE : "#D1D5DB"}`,
                           background: addDisabled ? "transparent" : isHovered ? BLUE_LIGHT : "transparent",
                           cursor: addDisabled ? "not-allowed" : "pointer",
@@ -274,8 +279,10 @@ export function ItemsTable({ items, onChange }: ItemsTableProps) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          width: 26,
-                          height: 26,
+                          minWidth: 44,
+                          minHeight: 44,
+                          width: 44,
+                          height: 44,
                           borderRadius: 6,
                           border: "none",
                           background: "transparent",
@@ -400,7 +407,7 @@ function ImageModal({ item, effectiveMaxFiles, invoiceFull, onClose, onUpload, o
             type="button"
             onClick={onClose}
             aria-label="Close"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 4, borderRadius: 6, display: "flex" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 0, minWidth: 44, minHeight: 44, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -416,6 +423,7 @@ function ImageModal({ item, effectiveMaxFiles, invoiceFull, onClose, onUpload, o
             acceptedTypes={["image/png", "image/jpeg"]}
             files={item.images}
             label="Add image"
+            itemDescription={item.description || undefined}
             onUpload={onUpload}
             onRemove={onRemove}
             onReorder={onReorder}

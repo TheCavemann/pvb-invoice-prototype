@@ -76,7 +76,7 @@ export function PreviewInvoice({ data, onClose }: Props) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 28px", borderBottom: "1px solid #E5E7EB", flexShrink: 0 }}>
           <span style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>Preview Invoice</span>
           <button type="button" onClick={onClose} aria-label="Close"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 4, display: "flex", borderRadius: 6 }}>
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 0, minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
