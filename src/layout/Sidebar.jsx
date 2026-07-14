@@ -88,14 +88,12 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <div className="flex items-center gap-2 border-t border-gray-100 px-5 py-5">
+      <div className="flex flex-col items-center gap-1.5 border-t border-gray-100 px-5 py-5">
         <LockIcon className="h-4 w-4 text-gray-400" />
-        <span className="text-sm font-extrabold tracking-tight text-gray-900">
-          piggyvest
-          <span className="ml-1 align-middle text-[10px] font-bold tracking-widest text-gray-400">
-            BUSINESS
-          </span>
-        </span>
+        <div className="text-center leading-tight">
+          <p className="text-sm font-extrabold tracking-tight text-gray-900">piggyvest</p>
+          <p className="text-[10px] font-bold tracking-widest text-gray-400">BUSINESS</p>
+        </div>
       </div>
     </aside>
   );

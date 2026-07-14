@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotsIcon, ExternalLinkIcon } from '../../icons/Icons';
 
-export default function RowActionsMenu({ wallet }) {
+export default function RowActionsMenu({ businessName, label }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function RowActionsMenu({ wallet }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={`Actions for ${wallet.walletName}`}
+        aria-label={`Actions for ${label}`}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
       >
         <DotsIcon className="h-4 w-4" />
@@ -34,7 +34,7 @@ export default function RowActionsMenu({ wallet }) {
             onClick={() => {
               setOpen(false);
               navigate('/business-management/profile', {
-                state: { businessName: wallet.businessName },
+                state: { businessName },
               });
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"

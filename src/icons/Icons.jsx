@@ -209,6 +209,22 @@ export function ArrowRightIcon(props) {
   );
 }
 
+export function ArrowUpRightIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 17 17 7m0 0H8m9 0v9" />
+    </svg>
+  );
+}
+
+export function ArrowDownLeftIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 7 7 17m0 0h9m-9 0V8" />
+    </svg>
+  );
+}
+
 export function CloseIcon(props) {
   return (
     <svg {...base} {...props}>

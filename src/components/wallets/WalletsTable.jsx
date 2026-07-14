@@ -1,8 +1,8 @@
-import { formatNaira } from '../../data/wallets';
+import { formatNaira } from '../../utils/format';
 import WalletTypeBadge from './WalletTypeBadge';
-import RowActionsMenu from './RowActionsMenu';
+import RowActionsMenu from '../shared/RowActionsMenu';
 import { SkeletonRows, EmptyState, ErrorState } from './TableStates';
-import Pagination from './Pagination';
+import Pagination from '../shared/Pagination';
 
 const columns = [
   'Business name',
@@ -71,7 +71,7 @@ export default function WalletsTable({
                   <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.accountNumber}</td>
                   <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.accountName}</td>
                   <td className="whitespace-nowrap px-2 py-3.5">
-                    <RowActionsMenu wallet={wallet} />
+                    <RowActionsMenu businessName={wallet.businessName} label={wallet.walletName} />
                   </td>
                 </tr>
               ))}
