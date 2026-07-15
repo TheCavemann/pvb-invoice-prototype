@@ -13,7 +13,7 @@ function countActive(filters) {
   return count;
 }
 
-export default function FilterPanel({ filters, onApply, businessNames, branchNames }) {
+export default function FilterPanel({ filters, onApply }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(filters);
   const panelRef = useRef(null);
@@ -98,36 +98,26 @@ export default function FilterPanel({ filters, onApply, businessNames, branchNam
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Business
               </label>
-              <select
+              <input
+                type="text"
                 value={draft.business}
                 onChange={(e) => setDraft((d) => ({ ...d, business: e.target.value }))}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none"
-              >
-                <option value="">All businesses</option>
-                {businessNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Type a business name"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none"
+              />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Branch
               </label>
-              <select
+              <input
+                type="text"
                 value={draft.branch}
                 onChange={(e) => setDraft((d) => ({ ...d, branch: e.target.value }))}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none"
-              >
-                <option value="">All branches</option>
-                {branchNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Type a branch name"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none"
+              />
             </div>
 
             <div>

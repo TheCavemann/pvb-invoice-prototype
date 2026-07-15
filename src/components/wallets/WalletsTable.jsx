@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { formatNaira } from '../../utils/format';
 import WalletTypeBadge from './WalletTypeBadge';
 import RowActionsMenu from '../shared/RowActionsMenu';
@@ -5,6 +6,7 @@ import { SkeletonRows, EmptyState, ErrorState } from './TableStates';
 import Pagination from '../shared/Pagination';
 
 const columns = [
+  'Date Created',
   'Business name',
   'Branch name',
   'Wallet name',
@@ -27,6 +29,8 @@ export default function WalletsTable({
   onPageChange,
   onPageSizeChange,
 }) {
+  const navigate = useNavigate();
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <div className="overflow-x-auto">
@@ -51,7 +55,12 @@ export default function WalletsTable({
             {status === 'success' &&
               wallets.length > 0 &&
               wallets.map((wallet) => (
-                <tr key={wallet.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60">
+                <tr
+                  key={wallet.id}
+                  onClick={() => navigate(`/wallets/${wallet.id}`)}
+                  className="cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60"
+                >
+                  <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.dateCreated}</td>
                   <td className="whitespace-nowrap px-4 py-3.5 font-medium text-gray-900">
                     {wallet.businessName}
                   </td>
@@ -70,7 +79,7 @@ export default function WalletsTable({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.accountNumber}</td>
                   <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.accountName}</td>
-                  <td className="whitespace-nowrap px-2 py-3.5">
+                  <td className="whitespace-nowrap px-2 py-3.5" onClick={(e) => e.stopPropagation()}>
                     <RowActionsMenu businessName={wallet.businessName} label={wallet.walletName} />
                   </td>
                 </tr>

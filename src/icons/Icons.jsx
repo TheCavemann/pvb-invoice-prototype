@@ -244,3 +244,27 @@ export function ExternalLinkIcon(props) {
     </svg>
   );
 }
+
+export function CopyIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.25 7.5V6a1.5 1.5 0 0 1 1.5-1.5h8.25A1.5 1.5 0 0 1 19.5 6v8.25a1.5 1.5 0 0 1-1.5 1.5h-1.5M8.25 7.5h-1.5A1.5 1.5 0 0 0 5.25 9v9a1.5 1.5 0 0 0 1.5 1.5h8.25a1.5 1.5 0 0 0 1.5-1.5v-1.5m-8.25-9h8.25a1.5 1.5 0 0 1 1.5 1.5v8.25"
+      />
+    </svg>
+  );
+}
+
+export function PrinterIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.75 8.25V4.5a.75.75 0 0 1 .75-.75h9a.75.75 0 0 1 .75.75v3.75M6.75 18.75H5.25a1.5 1.5 0 0 1-1.5-1.5v-6a1.5 1.5 0 0 1 1.5-1.5h13.5a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-1.5m-10.5 0v2.25a.75.75 0 0 0 .75.75h9a.75.75 0 0 0 .75-.75v-2.25m-10.5 0h10.5M8.25 12h.008v.008H8.25V12Z"
+      />
+    </svg>
+  );
+}

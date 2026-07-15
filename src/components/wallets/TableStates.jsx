@@ -1,4 +1,4 @@
-const COLUMN_COUNT = 9;
+const COLUMN_COUNT = 10;
 
 export function SkeletonRows({ rows = 8 }) {
   return (

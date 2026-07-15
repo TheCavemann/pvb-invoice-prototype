@@ -4,7 +4,7 @@ import { BellIcon, HelpIcon } from '../icons/Icons';
 
 export default function Topbar() {
   const { pathname } = useLocation();
-  const title = pageTitles[pathname] ?? 'Overview';
+  const title = pageTitles[pathname] ?? (pathname.startsWith('/wallets/') ? 'Wallets' : 'Overview');
 
   return (
     <header className="flex items-center justify-between px-8 py-6">

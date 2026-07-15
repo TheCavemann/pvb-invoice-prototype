@@ -4,15 +4,7 @@ import StatusBadge from '../shared/StatusBadge';
 import RowActionsMenu from '../shared/RowActionsMenu';
 import Pagination from '../shared/Pagination';
 
-const columns = [
-  'Business name',
-  'Description',
-  'Reference',
-  'Amount',
-  'Status',
-  'Date',
-  '',
-];
+const columns = ['Business', 'From', 'Amount', 'To', 'Date', 'Status', ''];
 
 export default function TransactionsTable({
   transactions,
@@ -21,6 +13,7 @@ export default function TransactionsTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  onRowClick,
 }) {
   const showPagination = page != null;
 
@@ -43,14 +36,17 @@ export default function TransactionsTable({
           </thead>
           <tbody>
             {transactions.map((txn) => (
-              <tr key={txn.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60">
+              <tr
+                key={txn.id}
+                onClick={() => onRowClick?.(txn)}
+                className={`border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 ${
+                  onRowClick ? 'cursor-pointer' : ''
+                }`}
+              >
                 <td className="whitespace-nowrap px-4 py-3.5 font-medium text-gray-900">
                   {txn.businessName}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{txn.description}</td>
-                <td className="whitespace-nowrap px-4 py-3.5 font-mono text-xs text-gray-500">
-                  {txn.id}
-                </td>
+                <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{txn.from}</td>
                 <td className="whitespace-nowrap px-4 py-3.5 font-medium">
                   {txn.type === 'Outflow' ? (
                     <span className="text-danger">-{formatNaira(txn.amount)}</span>
@@ -58,13 +54,14 @@ export default function TransactionsTable({
                     <span className="text-gray-900">+{formatNaira(txn.amount)}</span>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5">
-                  <StatusBadge status={txn.status} />
-                </td>
+                <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{txn.to}</td>
                 <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">
                   {formatTransactionDate(txn.date)}
                 </td>
-                <td className="whitespace-nowrap px-2 py-3.5">
+                <td className="whitespace-nowrap px-4 py-3.5">
+                  <StatusBadge status={txn.status} />
+                </td>
+                <td className="whitespace-nowrap px-2 py-3.5" onClick={(e) => e.stopPropagation()}>
                   <RowActionsMenu businessName={txn.businessName} label={txn.id} />
                 </td>
               </tr>

@@ -3,6 +3,7 @@ import Layout from './layout/Layout';
 import Overview from './pages/Overview';
 import Transactions from './pages/Transactions';
 import Wallets from './pages/Wallets';
+import WalletTransactions from './pages/WalletTransactions';
 import ComingSoon from './pages/ComingSoon';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="overview" element={<Overview />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="wallets" element={<Wallets />} />
+        <Route path="wallets/:walletId" element={<WalletTransactions />} />
         <Route path="business-management/*" element={<ComingSoon />} />
         <Route path="pos-terminals/*" element={<ComingSoon />} />
         <Route path="fees-and-interest" element={<ComingSoon />} />

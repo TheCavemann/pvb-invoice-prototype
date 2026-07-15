@@ -1,4 +1,5 @@
 import { mulberry32 } from '../utils/random';
+import { formatDateDMY } from '../utils/format';
 
 const rand = mulberry32(20240714);
 
@@ -11,31 +12,38 @@ function randomInt(min, max) {
 }
 
 const BUSINESSES = [
-  { name: 'Zenith Foodstuffs Limited', branches: ['Head Office', 'Ikeja Branch'] },
-  { name: 'Coral Reef Logistics Ltd', branches: ['Head Office'] },
-  { name: 'Northgate Textiles Limited', branches: ['Head Office', 'Kano Branch'] },
-  { name: 'Bluewave Energy Ltd', branches: ['Head Office'] },
-  { name: 'Prestige Autoparts Limited', branches: ['Head Office'] },
-  { name: 'Sunrise Agro Ventures Ltd', branches: ['Head Office', 'Ibadan Branch'] },
-  { name: 'Maple Leaf Furniture Limited', branches: ['Head Office'] },
-  { name: 'Ivory Coast Beauty Supplies Ltd', branches: ['Head Office'] },
-  { name: 'Falcon Freight Services Limited', branches: ['Head Office', 'Port Harcourt Branch'] },
-  { name: 'Golden Harvest Bakery Ltd', branches: ['Head Office'] },
-  { name: 'Silverline Electronics Limited', branches: ['Head Office'] },
-  { name: 'Crestview Pharmaceuticals Ltd', branches: ['Head Office', 'Abuja Branch'] },
-  { name: 'Amberstone Construction Limited', branches: ['Head Office'] },
-  { name: 'Palmgrove Hospitality Ltd', branches: ['Head Office'] },
-  { name: 'Cobalt Digital Solutions Limited', branches: ['Head Office'] },
+  { name: 'Zenith Foodstuffs Limited', branches: ['Head Office', 'Ikeja Office', 'Port Harcourt Branch'] },
+  { name: 'Coral Reef Logistics Ltd', branches: ['Head Office', 'Apapa Branch'] },
+  { name: 'Northgate Textiles Limited', branches: ['Head Office', 'Kano Branch', 'Kaduna Branch'] },
+  { name: 'Bluewave Energy Ltd', branches: ['Head Office', 'Warri Office'] },
+  { name: 'Prestige Autoparts Limited', branches: ['Head Office', 'Lagos Branch'] },
+  { name: 'Sunrise Agro Ventures Ltd', branches: ['Head Office', 'Ibadan Branch', 'Abeokuta Office'] },
+  { name: 'Maple Leaf Furniture Limited', branches: ['Head Office', 'Onitsha Branch'] },
+  { name: 'Ivory Coast Beauty Supplies Ltd', branches: ['Head Office', 'Victoria Island Branch'] },
+  { name: 'Falcon Freight Services Limited', branches: ['Head Office', 'Port Harcourt Branch', 'Aba Office'] },
+  { name: 'Golden Harvest Bakery Ltd', branches: ['Head Office', 'Enugu Branch'] },
+  { name: 'Silverline Electronics Limited', branches: ['Head Office', 'Computer Village Branch'] },
+  { name: 'Crestview Pharmaceuticals Ltd', branches: ['Head Office', 'Abuja Branch', 'Kubwa Office'] },
+  { name: 'Amberstone Construction Limited', branches: ['Head Office', 'Benin City Branch'] },
+  { name: 'Palmgrove Hospitality Ltd', branches: ['Head Office', 'Lekki Branch'] },
+  { name: 'Cobalt Digital Solutions Limited', branches: ['Head Office', 'Yaba Office'] },
 ];
 
 const WALLET_TYPES = ['Settlement', 'Expense', 'Savings', 'Api'];
+
+const usedAccountNumbers = new Set();
 
 function randomWalletId() {
   return `PVB-WL-${randomInt(10000000, 99999999)}`;
 }
 
 function randomAccountNumber() {
-  return String(randomInt(1000000000, 9999999999));
+  let accountNumber;
+  do {
+    accountNumber = `3${String(randomInt(0, 999999999)).padStart(9, '0')}`;
+  } while (usedAccountNumbers.has(accountNumber));
+  usedAccountNumbers.add(accountNumber);
+  return accountNumber;
 }
 
 function randomBalance(type) {
@@ -51,7 +59,10 @@ function randomDateCreated() {
   const start = new Date('2023-01-01').getTime();
   const end = new Date('2026-07-01').getTime();
   const date = new Date(start + rand() * (end - start));
-  return date.toISOString().slice(0, 10);
+  return {
+    dateCreated: formatDateDMY(date),
+    dateCreatedISO: date.toISOString().slice(0, 10),
+  };
 }
 
 function buildWalletsForBusiness(business, walletCount) {
@@ -69,6 +80,7 @@ function buildWalletsForBusiness(business, walletCount) {
     const isApi = type === 'Api';
     const branch = isApi ? 'API Accounts' : pick(business.branches);
     const balance = randomBalance(type);
+    const { dateCreated, dateCreatedISO } = randomDateCreated();
 
     wallets.push({
       id: randomWalletId(),
@@ -78,9 +90,10 @@ function buildWalletsForBusiness(business, walletCount) {
       walletType: type,
       balance,
       accountNumber: isApi ? 'N/A' : randomAccountNumber(),
-      accountName: isApi ? 'N/A' : business.name.toUpperCase(),
+      accountName: isApi ? 'N/A' : 'Pocket',
       status: rand() < 0.9 ? 'active' : 'inactive',
-      dateCreated: randomDateCreated(),
+      dateCreated,
+      dateCreatedISO,
     });
   });
 

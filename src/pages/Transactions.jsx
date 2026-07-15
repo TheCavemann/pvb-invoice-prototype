@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { SearchIcon, FilterIcon } from '../icons/Icons';
 import { transactions as allTransactions } from '../data/transactions';
 import TransactionsTable from '../components/transactions/TransactionsTable';
+import TransactionDetailsSheet from '../components/shared/TransactionDetailsSheet';
 
 export default function Transactions() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [selectedTxn, setSelectedTxn] = useState(null);
 
   useEffect(() => {
     setPage(1);
@@ -53,7 +55,10 @@ export default function Transactions() {
         pageSize={pageSize}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={setSelectedTxn}
       />
+
+      <TransactionDetailsSheet transaction={selectedTxn} onClose={() => setSelectedTxn(null)} />
     </div>
   );
 }

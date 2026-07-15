@@ -11,7 +11,7 @@ import {
 export const navConfig = [
   { label: 'Overview', icon: OverviewIcon, path: '/overview' },
   {
-    label: 'Business Management',
+    label: 'Business Mgt.',
     icon: BriefcaseIcon,
     basePath: '/business-management',
     children: [

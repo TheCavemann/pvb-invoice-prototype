@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { wallets as allWallets, businessNames, branchNames } from '../data/wallets';
+import { wallets as allWallets } from '../data/wallets';
 import { emptyFilters } from '../data/filterDefaults';
 import SearchBar from '../components/wallets/SearchBar';
 import FilterPanel from '../components/wallets/FilterPanel';
@@ -26,11 +26,19 @@ function matchesFilters(wallet, search, filters) {
   }
 
   if (filters.types.length && !filters.types.includes(wallet.walletType)) return false;
-  if (filters.business && wallet.businessName !== filters.business) return false;
-  if (filters.branch && wallet.branchName !== filters.branch) return false;
+  if (
+    filters.business &&
+    !wallet.businessName.toLowerCase().includes(filters.business.trim().toLowerCase())
+  )
+    return false;
+  if (
+    filters.branch &&
+    !wallet.branchName.toLowerCase().includes(filters.branch.trim().toLowerCase())
+  )
+    return false;
   if (filters.status && wallet.status !== filters.status) return false;
-  if (filters.dateFrom && wallet.dateCreated < filters.dateFrom) return false;
-  if (filters.dateTo && wallet.dateCreated > filters.dateTo) return false;
+  if (filters.dateFrom && wallet.dateCreatedISO < filters.dateFrom) return false;
+  if (filters.dateTo && wallet.dateCreatedISO > filters.dateTo) return false;
   if (filters.balanceMin && wallet.balance < Number(filters.balanceMin)) return false;
   if (filters.balanceMax && wallet.balance > Number(filters.balanceMax)) return false;
 
@@ -70,12 +78,7 @@ export default function Wallets() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <SearchBar value={search} onChange={setSearch} />
-          <FilterPanel
-            filters={filters}
-            onApply={setFilters}
-            businessNames={businessNames}
-            branchNames={branchNames}
-          />
+          <FilterPanel filters={filters} onApply={setFilters} />
         </div>
 
         <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 text-xs font-medium text-gray-500">
