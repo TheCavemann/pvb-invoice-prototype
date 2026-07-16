@@ -1,36 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
-import { FilterIcon, CloseIcon } from '../../icons/Icons';
-import { WALLET_TYPES, emptyFilters } from '../../data/filterDefaults';
+import { useEffect, useState } from 'react';
+import { ChevronDownIcon } from '../../icons/Icons';
+import { WALLET_TYPES, emptyAdvancedFilters } from '../../data/filterDefaults';
 
 function countActive(filters) {
   let count = 0;
   if (filters.types.length) count += 1;
-  if (filters.business) count += 1;
-  if (filters.branch) count += 1;
   if (filters.status) count += 1;
   if (filters.dateFrom || filters.dateTo) count += 1;
   if (filters.balanceMin || filters.balanceMax) count += 1;
   return count;
 }
 
-export default function FilterPanel({ filters, onApply }) {
+export default function AdvancedFilters({ filters, onApply }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(filters);
-  const panelRef = useRef(null);
 
   useEffect(() => {
-    if (open) setDraft(filters);
-  }, [open, filters]);
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
+    setDraft(filters);
+  }, [filters]);
 
   const toggleType = (type) => {
     setDraft((d) => ({
@@ -42,36 +29,24 @@ export default function FilterPanel({ filters, onApply }) {
   const activeCount = countActive(filters);
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
       >
-        <FilterIcon className="h-4 w-4" />
-        Filter
+        Advanced filters
         {activeCount > 0 && (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-blue px-1 text-xs font-semibold text-white">
             {activeCount}
           </span>
         )}
+        <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-[340px] rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-bold text-gray-900">Filter wallets</p>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
-              aria-label="Close filters"
-            >
-              <CloseIcon className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="max-h-[65vh] space-y-4 overflow-y-auto pr-1">
+        <div className="mt-2 w-full max-w-xl rounded-xl border border-gray-200 bg-white p-4 sm:w-[420px]">
+          <div className="space-y-4">
             <div>
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Wallet type
@@ -92,32 +67,6 @@ export default function FilterPanel({ filters, onApply }) {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Business
-              </label>
-              <input
-                type="text"
-                value={draft.business}
-                onChange={(e) => setDraft((d) => ({ ...d, business: e.target.value }))}
-                placeholder="Type a business name"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Branch
-              </label>
-              <input
-                type="text"
-                value={draft.branch}
-                onChange={(e) => setDraft((d) => ({ ...d, branch: e.target.value }))}
-                placeholder="Type a branch name"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none"
-              />
             </div>
 
             <div>
@@ -197,8 +146,8 @@ export default function FilterPanel({ filters, onApply }) {
             <button
               type="button"
               onClick={() => {
-                setDraft(emptyFilters);
-                onApply(emptyFilters);
+                setDraft(emptyAdvancedFilters);
+                onApply(emptyAdvancedFilters);
               }}
               className="text-sm font-medium text-gray-500 hover:text-gray-700"
             >
