@@ -3,6 +3,8 @@ const PLACEHOLDERS = {
   accountNumber: 'e.g. 3042704238',
   businessName: 'e.g. Zenith Foodstuffs Limited',
   branchName: 'e.g. Head Office',
+  transactionReference: 'e.g. PSP-REF-227592439',
+  sessionId: 'e.g. SESS-7592276801',
 };
 
 export default function WalletSearchCard({

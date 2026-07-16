@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { wallets as allWallets } from '../data/wallets';
+import { transactions as allTransactions } from '../data/transactions';
 import { emptyAdvancedFilters } from '../data/filterDefaults';
 import WalletSearchCard from '../components/wallets/WalletSearchCard';
 import AdvancedFilters from '../components/wallets/AdvancedFilters';
@@ -10,9 +11,12 @@ const SEARCH_TYPES = [
   { value: 'accountNumber', label: 'Account Number' },
   { value: 'businessName', label: 'Business Name' },
   { value: 'branchName', label: 'Branch Name' },
+  { value: 'transactionReference', label: 'Transaction Reference' },
+  { value: 'sessionId', label: 'Session ID' },
 ];
 
 const MULTI_RESULT_TYPES = ['businessName', 'branchName'];
+const TRANSACTION_SEARCH_TYPES = ['transactionReference', 'sessionId'];
 
 const DEMO_STATES = [
   { value: 'success', label: 'Success' },
@@ -20,21 +24,50 @@ const DEMO_STATES = [
   { value: 'error', label: 'Error' },
 ];
 
+function findWalletsViaTransaction(searchType, q) {
+  const transaction = allTransactions.find((txn) => {
+    if (searchType === 'transactionReference') {
+      return txn.providerReference.toLowerCase() === q || txn.peerReference.toLowerCase() === q;
+    }
+    if (searchType === 'sessionId') {
+      return txn.sessionId.toLowerCase() === q;
+    }
+    return false;
+  });
+
+  if (!transaction) return { wallets: [], transaction: null };
+
+  const wallet = allWallets.find((w) => w.id === transaction.walletId);
+  return { wallets: wallet ? [wallet] : [], transaction };
+}
+
 function runSearch(searchType, searchValue) {
   const q = searchValue.trim().toLowerCase();
-  if (!q) return [];
+  if (!q) return { wallets: [], transaction: null };
 
   switch (searchType) {
     case 'walletId':
-      return allWallets.filter((wallet) => wallet.id.toLowerCase() === q);
+      return { wallets: allWallets.filter((w) => w.id.toLowerCase() === q), transaction: null };
     case 'accountNumber':
-      return allWallets.filter((wallet) => wallet.accountNumber.toLowerCase() === q);
+      return {
+        wallets: allWallets.filter((w) => w.accountNumber.toLowerCase() === q),
+        transaction: null,
+      };
     case 'businessName':
-      return allWallets.filter((wallet) => wallet.businessName.toLowerCase().includes(q));
+      return {
+        wallets: allWallets.filter((w) => w.businessName.toLowerCase().includes(q)),
+        transaction: null,
+      };
     case 'branchName':
-      return allWallets.filter((wallet) => wallet.branchName.toLowerCase().includes(q));
+      return {
+        wallets: allWallets.filter((w) => w.branchName.toLowerCase().includes(q)),
+        transaction: null,
+      };
+    case 'transactionReference':
+    case 'sessionId':
+      return findWalletsViaTransaction(searchType, q);
     default:
-      return [];
+      return { wallets: [], transaction: null };
   }
 }
 
@@ -57,10 +90,13 @@ export default function Wallets() {
   const [pageSize, setPageSize] = useState(20);
   const [demoState, setDemoState] = useState('success');
 
-  const baseResults = useMemo(() => {
-    if (!hasSearched) return [];
+  const searchResult = useMemo(() => {
+    if (!hasSearched) return { wallets: [], transaction: null };
     return runSearch(searchType, searchValue);
   }, [hasSearched, searchType, searchValue]);
+
+  const baseResults = searchResult.wallets;
+  const matchedTransaction = searchResult.transaction;
 
   const showAdvancedFilters =
     hasSearched && MULTI_RESULT_TYPES.includes(searchType) && baseResults.length > 1;
@@ -102,6 +138,17 @@ export default function Wallets() {
   };
 
   const handleRetry = () => setDemoState('loading');
+
+  const emptyMessage = TRANSACTION_SEARCH_TYPES.includes(searchType)
+    ? 'No transaction found for that reference/session ID — check the value and try again'
+    : undefined;
+
+  const getRowState = matchedTransaction
+    ? (wallet) =>
+        wallet.id === matchedTransaction.walletId
+          ? { highlightTransactionId: matchedTransaction.id }
+          : undefined
+    : undefined;
 
   return (
     <div className="space-y-4">
@@ -154,6 +201,8 @@ export default function Wallets() {
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
+            emptyMessage={emptyMessage}
+            getRowState={getRowState}
           />
         </>
       )}

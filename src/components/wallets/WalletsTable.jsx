@@ -28,6 +28,8 @@ export default function WalletsTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  emptyMessage,
+  getRowState,
 }) {
   const navigate = useNavigate();
 
@@ -51,13 +53,16 @@ export default function WalletsTable({
           <tbody>
             {status === 'loading' && <SkeletonRows />}
             {status === 'error' && <ErrorState onRetry={onRetry} />}
-            {status === 'success' && wallets.length === 0 && <EmptyState />}
+            {status === 'success' && wallets.length === 0 && <EmptyState message={emptyMessage} />}
             {status === 'success' &&
               wallets.length > 0 &&
               wallets.map((wallet) => (
                 <tr
                   key={wallet.id}
-                  onClick={() => navigate(`/wallets/${wallet.id}`)}
+                  onClick={() => {
+                    const state = getRowState?.(wallet);
+                    navigate(`/wallets/${wallet.id}`, state ? { state } : undefined);
+                  }}
                   className="cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60"
                 >
                   <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{wallet.dateCreated}</td>

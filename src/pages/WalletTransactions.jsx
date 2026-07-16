@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { wallets } from '../data/wallets';
 import { transactions as allTransactions } from '../data/transactions';
 import { formatNaira } from '../utils/format';
@@ -10,6 +10,8 @@ import { ArrowLeftIcon, CopyIcon, SearchIcon } from '../icons/Icons';
 export default function WalletTransactions() {
   const { walletId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const highlightTransactionId = location.state?.highlightTransactionId ?? null;
   const wallet = wallets.find((w) => w.id === walletId);
 
   const [search, setSearch] = useState('');
@@ -41,6 +43,18 @@ export default function WalletTransactions() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const pageTransactions = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    if (!highlightTransactionId) return;
+    const idx = filtered.findIndex((txn) => txn.id === highlightTransactionId);
+    if (idx >= 0) setPage(Math.floor(idx / pageSize) + 1);
+  }, [highlightTransactionId, filtered, pageSize]);
+
+  useEffect(() => {
+    if (!highlightTransactionId) return;
+    const txn = walletTransactions.find((t) => t.id === highlightTransactionId);
+    if (txn) setSelectedTxn(txn);
+  }, [highlightTransactionId, walletTransactions]);
 
   if (!wallet) {
     return (
@@ -117,6 +131,7 @@ export default function WalletTransactions() {
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
         onRowClick={setSelectedTxn}
+        highlightRowId={highlightTransactionId}
       />
 
       <TransactionDetailsSheet transaction={selectedTxn} onClose={() => setSelectedTxn(null)} />

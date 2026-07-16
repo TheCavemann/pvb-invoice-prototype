@@ -16,13 +16,13 @@ export function SkeletonRows({ rows = 8 }) {
   );
 }
 
-export function EmptyState() {
+export function EmptyState({
+  message = 'No wallet found — check the ID or account number and try again',
+}) {
   return (
     <tr>
       <td colSpan={COLUMN_COUNT} className="px-4 py-16 text-center">
-        <p className="text-sm font-medium text-gray-500">
-          No wallet found — check the ID or account number and try again
-        </p>
+        <p className="text-sm font-medium text-gray-500">{message}</p>
       </td>
     </tr>
   );

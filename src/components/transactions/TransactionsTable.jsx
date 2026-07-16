@@ -14,6 +14,7 @@ export default function TransactionsTable({
   onPageChange,
   onPageSizeChange,
   onRowClick,
+  highlightRowId,
 }) {
   const showPagination = page != null;
 
@@ -41,7 +42,7 @@ export default function TransactionsTable({
                 onClick={() => onRowClick?.(txn)}
                 className={`border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 ${
                   onRowClick ? 'cursor-pointer' : ''
-                }`}
+                } ${txn.id === highlightRowId ? 'bg-brand-lavender/60' : ''}`}
               >
                 <td className="whitespace-nowrap px-4 py-3.5 font-medium text-gray-900">
                   {txn.businessName}
