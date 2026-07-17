@@ -257,6 +257,55 @@ export function CopyIcon(props) {
   );
 }
 
+export function OverdraftIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 6.75A1.5 1.5 0 0 1 4.5 5.25h15A1.5 1.5 0 0 1 21 6.75v10.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.25V6.75Z"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75h18" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 14.25h3" />
+      <circle cx="16.5" cy="14.25" r="2.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.375 14.25h2.25" />
+    </svg>
+  );
+}
+
+export function BulkTransferIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.5 6.75h9M4.5 11.25h6M4.5 15.75h9"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 8.25 19.5 12l-3.75 3.75" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-6.75" />
+    </svg>
+  );
+}
+
+export function ApiWalletIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 7.5A1.5 1.5 0 0 1 4.5 6h13.5A1.5 1.5 0 0 1 19.5 7.5v.75H4.5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 7.5v9A1.5 1.5 0 0 0 4.5 18h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H16a2.25 2.25 0 0 0 0 4.5h4.5"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m9 10.5-1.75 1.75L9 14" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m12.5 10.5 1.75 1.75-1.75 1.75" />
+    </svg>
+  );
+}
+
 export function PrinterIcon(props) {
   return (
     <svg {...base} {...props}>

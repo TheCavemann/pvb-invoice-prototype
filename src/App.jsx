@@ -15,6 +15,9 @@ function App() {
         <Route path="transactions" element={<Transactions />} />
         <Route path="wallets" element={<Wallets />} />
         <Route path="wallets/:walletId" element={<WalletTransactions />} />
+        <Route path="overdraft" element={<ComingSoon />} />
+        <Route path="bulk-transfers" element={<ComingSoon />} />
+        <Route path="api-wallets" element={<ComingSoon />} />
         <Route path="business-management/*" element={<ComingSoon />} />
         <Route path="pos-terminals/*" element={<ComingSoon />} />
         <Route path="fees-and-interest" element={<ComingSoon />} />
